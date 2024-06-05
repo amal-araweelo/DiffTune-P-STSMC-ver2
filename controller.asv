@@ -45,7 +45,7 @@ function ud = controller(X, Xref, k_vec, theta_r_dot(k), param, dt) % t for time
     % STSMC controller
     s = omega_m - omega_r; % Error
     v_dot = -k2 * sgn_approx(s);
-    u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + integral(v_dot,dt)/dt;
+    u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + integr(v_dot)/dt;
     u = u_smc + J_m * omega_r_dot;
     
     % Output
