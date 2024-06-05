@@ -23,6 +23,8 @@
 % omega_l: Load angular velocity
 % theta_m: motor angular position
 % theta_l: load angular position
+% X = [omega_m; omega_l; theta_m; theta_l]
+% Xref (ini) = [omega_m; omega_l; theta_m; theta_r]
 
 % Control includes
 % Theta_r: Load postition reference
@@ -40,7 +42,16 @@ dim_state = 4; % dimension of system state
 dim_control = 1;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
+%% Video simulation
+param.generateVideo = true;
+if param.generateVideo
+    video_obj = VideoWriter('DubinCar.mp4','MPEG-4');
+    video_obj.FrameRate = 15;
+    open(video_obj);
+end
+
 %% Define simulation parameters (e.g., sample time dt, duration, etc)
+
 dt = 0.001;     % 1 kHz
 time = 0:dt:10;
 
@@ -89,51 +100,55 @@ temp = abs(atan(omega_l))*pi/2;
     end
 T_Fl = omega_l*b_fr + sgn(omega_l*10)*T_C + 0;
 
+% Params
+
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
 k1 = 1.453488372 * 2.45 * 0.99; % use proportional gain from PI controller (k_vel = 1.45*2.45)
 k2 = 50;
 k_pos = 25;      % ignored when hand-tuning STSMC
-k_vec = [k1, k2, k_pos];
+k_vec = [k1; k2; k_pos];
 
 
 %% Define desired trajectory if necessary
-theta_r = sin(2*pi*time);   % theta_r is a sine wave with frequency 1 Hz
+theta_r = sin(2*pi*time);   % theta_r is a sine wave with frequency 1 kHz
 theta_r_dot = 2 * pi * cos(2*pi*time);
 
 
 %% Initialize variables for DiffTune iterations
-learningRate = 2;  
+learningRate = 2;  % Calculate  
 maxIterations = 100;
 itr = 0;
 
 loss_hist = [];  % storage of the loss value in each iteration
-% rmse_hist = []; % If we want video
+rmse_hist = []; % If we want video
 param_hist = []; % storage of the parameter value in each iteration
 gradientUpdate = zeros(dim_controllerParameters,1); % define the parameter update at each iteration
 
 %% DiffTune iterations
-%while (1)
+while (1)
     itr = itr + 1;
 
-    % initialize state
+    % Initialize state
     X_storage = zeros(dim_state,1);
     
-    % initialize sensitivity
+    % Initialize sensitivity
     dx_dtheta = zeros(dim_state,dim_controllerParameters);
     du_dtheta = zeros(dim_control,dim_controllerParameters);
 
-    % initializegradient of loss
+    % Initialize gradient of loss
     theta_gradient = zeros(1,dim_controllerParameters);
 
-    % initialize reference state if necessary
+    % Initialize reference state and desired trajectory
+    Xref_storage = [X_storage(1:3) ; theta_r(1)];
 
-    for k = 1:length(time)-1
-        % load current state and current reference
+    for k = 1 : length(time) - 1
+       
+        % Load current state and current reference
         X = X_storage(:,end);
         Xref = Xref_storage(:,end);
  
-        % compute the control action (of dimension dim_control x 1)
+        % Compute the control action
         u = controller(...);
 
         compute the sensitivity 
@@ -149,7 +164,7 @@ gradientUpdate = zeros(dim_controllerParameters,1); % define the parameter updat
 
         % integrate the reference system if necessary
         
-    % end
+    end
     
     % loss is the squared norm of the position tracking error
     % loss = ...
@@ -183,7 +198,7 @@ gradientUpdate = zeros(dim_controllerParameters,1); % define the parameter updat
     % if itr >= maxIterations
     %    break;
     % end
-% end
+end
 
 
 %% plot trajectory
