@@ -88,19 +88,18 @@ b_fr = 0.0016;  % N m s rad^(-1)
 J_l = 1; % kgm^2 -- Moment of inertia
 inv_J_l = J_l;
 
-
-% skriver af fra ligningerne der bestemmer dem
-T_l = K_s*(theta_m/N - theta_l) + D_s*(omega_m/N - omega_l);
-T_Fm = omega_m*b_fr + sgn(omega_m*10)*T_C;
 temp = abs(atan(omega_l))*pi/2;
     if temp > 1
         temp = 1;
     elseif temp < 0
         temp = 0;
     end
-T_Fl = omega_l*b_fr + sgn(omega_l*10)*T_C + 0;
 
 % Params
+param.J_l = 1; % kgm^2 -- Moment of inertia
+param.T_l = K_s*(theta_m/N - theta_l) + D_s*(omega_m/N - omega_l);
+param.T_Fm = omega_m*b_fr + sgn(omega_m*10)*T_C;
+param.T_Fl = omega_l*b_fr + sgn(omega_l*10)*T_C + 0;
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
