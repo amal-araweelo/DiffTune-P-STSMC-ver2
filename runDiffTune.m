@@ -41,8 +41,8 @@ dim_control = 1;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Define simulation parameters (e.g., sample time dt, duration, etc)
-%dt = 0.01; %0.125ms
-%time = 0:dt:10;
+dt = 0.001;     % 1 kHz
+time = 0:dt:10;
 
 %% constant parameters
 % omega_s: Motor Stribeck velocity
@@ -78,6 +78,17 @@ J_l = 1; % kgm^2 -- Moment of inertia
 inv_J_l = J_l;
 
 
+% skriver af fra ligningerne der bestemmer dem
+T_l = K_s*(theta_m/N - theta_l) + D_s*(omega_m/N - omega_l);
+T_Fm = omega_m*b_fr + sgn(omega_m*10)*T_C;
+temp = abs(atan(omega_l))*pi/2;
+    if temp > 1
+        temp = 1;
+    elseif temp < 0
+        temp = 0;
+    end
+T_Fl = omega_l*b_fr + sgn(omega_l*10)*T_C + 0;
+
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
 k1 = 1.453488372 * 2.45 * 0.99; % use proportional gain from PI controller (k_vel = 1.45*2.45)
@@ -89,18 +100,6 @@ k_vec = [k1, k2, k_pos];
 %% Define desired trajectory if necessary
 theta_r = sin(2*pi*time);   % theta_r is a sine wave with frequency 1 Hz
 theta_r_dot = 2 * pi * cos(2*pi*time);
-
-
-% skriver af fra ligningerne der bestemmer dem
-T_l = K_s*(theta_m/N - theta_l) + D_s*(omega_m/N - omega_l);
-T_Fm = omega_m*b_fr + sgn(omega_m*10)*T_C;
-temp = abs(atan(omega_l))*pi/2;
-    if temp > 1
-        temp = 1;
-    elseif temp < 0
-        temp = 0;
-    end
-T_Fl = omega_l*b_fr + sgn(omega_l*10)*T_C + 0;
 
 
 %% Initialize variables for DiffTune iterations
