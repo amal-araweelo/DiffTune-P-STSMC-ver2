@@ -38,7 +38,7 @@ import casadi.*
 %% define the dimensions
 dim_state = 4; % dimension of system state
 dim_control = 1;  % dimension of control inputs
-dim_controllerParameters = 3??;  % dimension of controller parameters
+dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Define simulation parameters (e.g., sample time dt, duration, etc)
 %dt = 0.01; %0.125ms
