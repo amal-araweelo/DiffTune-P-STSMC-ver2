@@ -152,18 +152,16 @@ while (1)
 
         % Accumulating the gradient of loss w/ respect to controller parameters
         % You need to provide dloss_dx and dloss_du here
-        dloss_dx = 2 * (X - Xref);  % gradient of loss function w/ respect to state (see notes)
-        dloss_du = 0;               % control input is not part of loss path (therefore loss does not depend directly on control input)
+        % dloss_dx = 2 * (X - Xref);  % gradient of loss function w/ respect to state (see notes)
+        % dloss_du = 0;               % control input is not part of loss path (therefore loss does not depend directly on control input)
         % We then have:
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref(4)] * dx_dtheta;
 
         % integrate the ode dynamics
-        % [~,sold] = ode45(@(t,X) dynamics(t,...),[time(k) time(k+1)],X);
-        % X_storage = [X_storage sold(end,:)'];
-
-        % integrate the reference system if necessary
+        [~, sold] = ode45(@(t,X) dynamics(t, X, u, param), [time(k) time(k+1)], X);
+        X_storage = [X_storage sold(end,:)'];
         
     end
     
