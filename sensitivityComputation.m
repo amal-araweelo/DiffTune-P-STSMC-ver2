@@ -2,7 +2,7 @@
 % time
 
 % Inputs
-% sensitivity: dxdtheta
+% dxdtheta_current: dxdtheta (sensitivity)
 % X: actual state, [omega_m; omega_l; theta_m; theta_l]
 % Xref: desired/reference state, [omega_m; omega_l; theta_m; theta_r]
 % u: torque command (output of controller, input to system)
@@ -14,14 +14,13 @@
 % dXdphi: calculated sensitivity
 % dudphi: calculated sensitivity
 
-function [dXdphi,dudphi] = sensitivityComputation(sensitivity, X, Xref, ...
-    theta_r_dot, u, param, k_vec, dt)
+function [dXdphi,dudphi] = sensitivityComputation(dxdtheta_current, X, Xref, theta_r_dot, u, param, k_vec, dt)
 
 % Evaluate the Jacobians
-dfdX = grad_f_X_fcn(X, dt, u, param.J_m, param.T_Fm, param.N, param.T_l, param.J_l, param.T_Fl);
+dfdX = grad_f_X_fcn(X, dt, u, param.J_m, param.N, param.J_l);
 dfdX = full(dfdX);    % full() converts sparse matrix to full matrix
 
-dfdu = grad_f_u_fcn(X, dt, u, param.J_m, param.T_Fm, param.N, param.T_l, param.J_l, param.T_Fl);
+dfdu = grad_f_u_fcn(X, dt, u, param.J_m, param.N, param.J_l);
 dfdu = full(dfdu);
 
 dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, J_m, dt);
@@ -31,7 +30,7 @@ dhdtheta = grad_h_theta_fcn(X, Xref, k_vec, theta_r_dot, J_m, dt);
 dhdtheta = full(dhdtheta);
 
 % Assemble the Jacobians to compute the sensitivity
-dXdphi = (dfdX + dfdu * dhdX) * sensitivity + dfdu * dhdtheta;
-dudphi = dhdX * sensitivity + dhdtheta;
+dXdphi = (dfdX + dfdu * dhdX) * dxdtheta_current + dfdu * dhdtheta;
+dudphi = dhdX * dxdtheta_current + dhdtheta;
 
 end
