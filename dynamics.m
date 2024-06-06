@@ -9,7 +9,7 @@ theta_m = X(3);
 theta_l = X(4);
 
 J_m = param.J_m;
-J_l = param.J_L;
+J_l = param.J_l;
 
 T_l = param.K_S*(theta_m/param.N - theta_l) + param.D_s*(omega_m/param.N - omega_l);
 T_Fm = omega_m*param.b_fr + sgn_approx(omega_m*10)*param.T_C;
