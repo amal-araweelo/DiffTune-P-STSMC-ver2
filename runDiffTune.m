@@ -51,49 +51,40 @@ if param.generateVideo
 end
 
 %% Define simulation parameters (e.g., sample time dt, duration, etc)
-
 dt = 0.001;     % 1 kHz
 time = 0:dt:10;
 
 %% constant parameters
 % omega_s: Motor Stribeck velocity
 % Motor electrical parameters
-r_s = 3.6644;           % Ohm -- Stator winding resistance (per phase)
-L_d = 21.4e-3;          % mH -- Rotating field inductance
-L_q = 1.2*L_d;          % mH -- Rotating torque inductance
-P = 6;                  % Non-dimensional -- Number of poles
-k_T = 1.43;             % Nm/A -- Torque constant
-k_E = 87*2*pi*60*0.001; % Vs/rad -- Voltage constant
-lambda_m = 0.3148;      % Vs/rad -- amplitude of the flux linkages
+param.r_s = 3.6644;           % Ohm -- Stator winding resistance (per phase)
+param.L_d = 21.4e-3;          % mH -- Rotating field inductance
+param.L_q = 1.2*L_d;          % mH -- Rotating torque inductance
+param.P = 6;                  % Non-dimensional -- Number of poles
+param.k_T = 1.43;             % Nm/A -- Torque constant
+param.k_E = 87*2*pi*60*0.001; % Vs/rad -- Voltage constant
+param.lambda_m = 0.3148;      % Vs/rad -- amplitude of the flux linkages
                         %   established by the permanent magnet as viewed
                         %   from the stator phase windings.
 % Motor mechanical parameters
-J_m = 2.81e-4 + 5.5e-4; % kgm^2 -- Moment of inertia
-N = 1;                  % -- Gear ratio
+param.J_m = 2.81e-4 + 5.5e-4; % kgm^2 -- Moment of inertia
+param.N = 1;                  % -- Gear ratio
 % Values of friction and shaft parameters
 % Taken from Table 4.3: Summary of calculated friction and shaft parameters
 % (page 40, Dimitrios Papageorgiou phd thesis)
 % Shaft constants
-K_S = 32.94;    % N m rad^(-1)
-D_S = 0.0548;   % N m s rad^(-1)
+param.K_S = 32.94;    % N m rad^(-1)
+param.D_S = 0.0548;   % N m s rad^(-1)
 % Coulomb friction
 % (assuming T_C is the average of T_C_m and T_C_l)
-T_C = (0.0223 + 0.0232) / 2;    % N m
+param.T_C = (0.0223 + 0.0232) / 2;    % N m
 % Static friction
 % (assuming T_S is the average of T_S_m and T_S_l)
-T_S = (0.0441 + 0.0453) / 2;    % N m
+param.T_S = (0.0441 + 0.0453) / 2;    % N m
 % Friction constants
-b_fr = 0.0016;  % N m s rad^(-1)
+param.b_fr = 0.0016;  % N m s rad^(-1)
 % Load inertia      (not sure...)
-J_l = 1; % kgm^2 -- Moment of inertia
-inv_J_l = J_l;
-
-temp = abs(atan(omega_l))*pi/2;
-    if temp > 1
-        temp = 1;
-    elseif temp < 0
-        temp = 0;
-    end
+param.inv_J_l = J_l;
 
 % Params
 param.J_l = 1; % kgm^2 -- Moment of inertia
