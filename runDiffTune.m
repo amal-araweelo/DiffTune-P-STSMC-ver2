@@ -5,7 +5,7 @@
 % N: Gearing ratio
 % J_m: Motor inertia
 % J_l: Load inertia
-% K_s: Shaft stifness
+% K_S: Shaft stifness
 % D_s: Shaft damping coefficinet
 % T_Cm: Motor Coulomb friction
 % T_Sm: Motor static friction coefficient
@@ -83,14 +83,9 @@ param.T_C = (0.0223 + 0.0232) / 2;    % N m
 param.T_S = (0.0441 + 0.0453) / 2;    % N m
 % Friction constants
 param.b_fr = 0.0016;  % N m s rad^(-1)
-% Load inertia      (not sure...)
-param.inv_J_l = J_l;
-
-% Params
 param.J_l = 1; % kgm^2 -- Moment of inertia
-param.T_l = K_s*(theta_m/N - theta_l) + D_s*(omega_m/N - omega_l);
-param.T_Fm = omega_m*b_fr + sgn(omega_m*10)*T_C;
-param.T_Fl = omega_l*b_fr + sgn(omega_l*10)*T_C + 0;
+% Load inertia      (not sure...)
+param.inv_J_l = param.J_l;
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)

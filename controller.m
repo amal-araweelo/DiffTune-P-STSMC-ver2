@@ -40,7 +40,7 @@ function ud = controller(X, Xref, k_vec, theta_r_dot, J_m, N, dt) % t for time
 
     % STSMC controller
     s = omega_m - omega_r; % Error
-    v_dot = -k2 * sgn_approx(s);
+    v_dot = -k2 * sgn_approx(100*s);
     
     if (isempty(v)) % initialise v to zero in first iteration
         v = 0;
