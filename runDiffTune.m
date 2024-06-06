@@ -6,7 +6,7 @@
 % J_m: Motor inertia
 % J_l: Load inertia
 % K_S: Shaft stifness
-% D_s: Shaft damping coefficinet
+% D_S: Shaft damping coefficinet
 % T_Cm: Motor Coulomb friction
 % T_Sm: Motor static friction coefficient
 % omega_s: Motor Stribeck velocity
@@ -46,7 +46,7 @@ dim_controllerParameters = 3;  % dimension of controller parameters
 %% Video simulation
 param.generateVideo = true;
 if param.generateVideo
-    video_obj = VideoWriter('DubinCar.mp4','MPEG-4');
+    video_obj = VideoWriter('DriveTrain.mp4','MPEG-4');
     video_obj.FrameRate = 15;
     open(video_obj);
 end
