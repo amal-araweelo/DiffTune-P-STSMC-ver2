@@ -145,13 +145,12 @@ while (1)
         u = controller(X, Xref, k_vec, theta_r_dot(k), param, dt); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(sensitivity,X,Xref,theta_r_dot,u,param,theta,dt);
+        [dx_dtheta, du_dtheta] = sensitivityComputation(sensitivity,X,Xref,theta_r_dot,u,param,k_vec,dt);
         
-        % Accumulating the gradient of loss w/ respect to controller parameters
-        % (loss is the squared norm of the position tracking error)
-        loss = loss + (norm(theta_r(k)-X(4)))^2; % X(4) corresponds to current theta_l 
-        
+        % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
+        loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l         
 
+        % Accumulating the gradient of loss w/ respect to controller parameters
         % You need to provide dloss_dx and dloss_du here
         theta_gradient = theta_gradient + dloss_dx * dx_dtheta + + dloss_du * du_dtheta;
 
