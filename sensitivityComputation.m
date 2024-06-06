@@ -23,10 +23,10 @@ dfdX = full(dfdX);    % full() converts sparse matrix to full matrix
 dfdu = grad_f_u_fcn(X, dt, u, param.J_m, param.N, param.J_l);
 dfdu = full(dfdu);
 
-dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, J_m, dt);
+dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, param.J_m, dt);
 dhdX = full(dhdX);
 
-dhdtheta = grad_h_theta_fcn(X, Xref, k_vec, theta_r_dot, J_m, dt);
+dhdtheta = grad_h_theta_fcn(X, Xref, k_vec, theta_r_dot, param.J_m, dt);
 dhdtheta = full(dhdtheta);
 
 % Assemble the Jacobians to compute the sensitivity
