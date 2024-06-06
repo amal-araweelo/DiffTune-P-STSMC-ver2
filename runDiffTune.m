@@ -97,9 +97,10 @@ k_vec = [k1; k2; k_pos];
 
 
 %% Define desired trajectory if necessary
-theta_r = sin(2*pi*time);   % theta_r is a sine wave with frequency 1 kHz
-theta_r_dot = 2 * pi * cos(2*pi*time);
-theta_r_2dot = -4 * pi^2 * sin(2*pi*time);
+freq = 1;   % 1 rad/s   (mere korrekt hvis 2*pi)
+theta_r = sin(freq * time);   % theta_r is a sine wave with frequency 1 kHz
+theta_r_dot = freq * cos(freq * time);
+theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
 learningRate = 2;  % Calculate  
