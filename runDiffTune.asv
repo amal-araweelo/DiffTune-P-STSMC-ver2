@@ -159,52 +159,105 @@ while (1)
         % Which can be written as (since we are only concerned with the position of load):
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref(4)] * dx_dtheta;
 
-        % integrate the ode dynamics
+        % Integrate the ode dynamics
         [~, sold] = ode45(@(t,X) dynamics(t, X, u, param), [time(k) time(k+1)], X);
+        
+        % Store the new state
         X_storage = [X_storage sold(end,:)'];
-
-        % integrate the reference system if necessary
-        [~, solref] = ode45(@(t,X) dynamics(t,X, theta_r_dot, param),[time(k) time(k+1)], Xref);
-        Xref_storage = [Xref_storage solref(end,:)'];
         
     end
-    
-    % loss is the squared norm of the position tracking error
-    % loss = ...
-    % loss_hist = [loss_hist loss];
 
-    % update the gradient
-    % gradientUpdate = - learningRate * theta_gradient;
+    % Compute the RSME (root-mean-square error)
+    RMSE = sqrt(1 / length(time) * loss);
 
-    % sanity check
-    % if isnan(gradientUpdate)
-    %    fprintf('gradient is NAN. Quit.\n');
-    %    break;
-    % end
+    % Store loss and RMSE
+    loss_hist = [loss_hist loss];
+    rmse_hist = [rmse_hist RMSE];
+
+    % Update the gradient
+    gradientUpdate = - learningRate * theta_gradient;
+
+    % Sanity check
+    if isnan(gradientUpdate)
+       fprintf('gradient is NAN. Quit.\n');
+       break;
+    end
    
-    % gradient descent
-    % theta = theta + gradientUpdate';
+    % Gradient descent
+    k_vec = k_vec + gradientUpdate';    % ' used for transposing matrix or vector
 
-    % projection of all parameters to the feasible set
+    % Projection of all parameters to the feasible set
     % the feasible set of parameters in this case is greater than 0.1
-    % if any(theta < 0.1)
-    %    neg_indicator = (theta < 0.1);
-    %    pos_indicator = ~neg_indicator;
-    %    theta_min = 0.1*ones(4,1);
-    %    theta = neg_indicator.*theta_min + pos_indicator.*theta;
-    % end
+    % (taken from template)
+    % (NEED TO FIND OUR VALUE!)
+    if any(k_vec < 0.1)
+       neg_indicator = (k_vec < 0.1);
+       pos_indicator = ~neg_indicator;
+       k_vec_default = 0.1 * ones(4,1);
+       k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
+    end
 
-    % store the parameters
-    % param_hist = [param_hist theta];
+    % Store the parameters
+    param_hist = [param_hist k_vec];
 
-    % terminate if the total number of iterations is more than maxIterations
-    % if itr >= maxIterations
-    %    break;
-    % end
+    % Plotting
+    set(gcf,'Position',[472 320 950 455]);
+    set(gcf,'color','w');
+
+    % Position (theta_l) tracking
+    subplot(3,3,[1,2]);
+    plot(t,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
+    hold on;
+    plot(t,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
+    xlabel('time [s]');
+    ylabel('\theta_l [rad]');
+    grid on;
+    h_lgd = legend;
+    set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
+    set(gca,'FontSize',10);
+
+    % RMSE
+    subplot(3,3,[3;6;9]);
+    plot(rmse_history,'LineWidth',1.5);
+    hold on;
+    grid on;
+    stem(length(rmse_history),rmse_history(end),'Color',[0 0.4470 0.7410]);
+
+    xlim([0 100]);
+    ylim([0 rmse_history(1)*1.1]);
+    text(50,0.3,['iteration = ' num2str(length(rmse_history))],'FontSize',12);
+    xlabel('iterations');
+    ylabel('RMSE [rad]');
+    set(gca,'FontSize',10);
+    plotedit(gca,'on');
+    plotedit(gca,'off');
+
+    drawnow;
+
+    % Visualization for movie
+    if param.generateVideo
+        frame = getframe(gcf);
+        writeVideo(video_obj,frame);
+        clf
+    end
+
+    % Terminate if the total number of iterations is more than maxIterations
+    if itr >= maxIterations
+       break;
+    end
 end
 
+if param.generateVideo
+    close(video_obj);
+end
 
-%% plot trajectory
+%% Plot trajectory
+figure;
+plot(Xref_storage(1,:),'DisplayName','desired');
+hold on;
+plot(X_storage(1,:),'DisplayName','P-STSMC');
+legend;
+ylabel('\theta [rad]');
 
 %% Debug session
 % check_dx_dtheta = sum(isnan(dx_dtheta),'all');
