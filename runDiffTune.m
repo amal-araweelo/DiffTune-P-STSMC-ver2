@@ -135,6 +135,9 @@ while (1)
     dx_dtheta = zeros(dim_state,dim_controllerParameters);
     du_dtheta = zeros(dim_control,dim_controllerParameters);
 
+    % Initialize loss
+    loss = 0;
+
     % Initialize gradient of loss
     theta_gradient = zeros(1,dim_controllerParameters);
 
@@ -148,13 +151,17 @@ while (1)
         Xref = Xref_storage(:,end);
  
         % Compute the control action
-        u = controller(...);
+        u = controller(X, Xref, k_vec, theta_r_dot(k), param, dt); 
 
-        compute the sensitivity 
-        %[dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta,...);
+        % Compute the sensitivity 
+        [dx_dtheta, du_dtheta] = sensitivityComputation(sensitivity,X,Xref,theta_r_dot,u,param,theta,dt);
         
-        % accumulating the gradient of loss wrt controller parameters
-        % you need to provide dloss_dx and dloss_du here
+        % Accumulating the gradient of loss w/ respect to controller parameters
+        % (loss is the squared norm of the position tracking error)
+        loss = loss + (norm(theta_r(k)-X(4)))^2; % X(4) corresponds to current theta_l 
+        
+
+        % You need to provide dloss_dx and dloss_du here
         theta_gradient = theta_gradient + dloss_dx * dx_dtheta + + dloss_du * du_dtheta;
 
         % integrate the ode dynamics
