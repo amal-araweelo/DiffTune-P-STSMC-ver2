@@ -253,9 +253,9 @@ end
 
 %% Plot trajectory
 figure;
-plot(Xref_storage(1,:),'DisplayName','desired');
+plot(time, Xref_storage(4,:),'DisplayName','theta_r');
 hold on;
-plot(X_storage(1,:),'DisplayName','P-STSMC');
+plot(time, X_storage(4,:),'DisplayName','theta_l');
 legend;
 ylabel('\theta [rad]');
 
