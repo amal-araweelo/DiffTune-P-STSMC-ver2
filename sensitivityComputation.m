@@ -20,16 +20,16 @@ function [dXdphi,dudphi] = sensitivityComputation(sensitivity, X, Xref, ...
 J_m = param.J_m;
 
 % Evaluate the Jacobians
-dfdX = grad_f_X_fcn(X,u,dt,J_m);
+dfdX = grad_f_X_fcn(X, u, dt, J_m);
 dfdX = full(dfdX);    % full() converts sparse matrix to full matrix
 
-dfdu = grad_f_u_fcn(X,u,dt,J_m);
+dfdu = grad_f_u_fcn(X, u, dt, J_m);
 dfdu = full(dfdu);
 
-dhdX = grad_h_X_fcn(X,Xref,theta_r_dot,theta,J_m);
+dhdX = grad_h_X_fcn(X, Xref, theta_r_dot, theta, J_m);
 dhdX = full(dhdX);
 
-dhdtheta = grad_h_theta_fcn(X,Xref,theta_r_dot,theta,J_m);
+dhdtheta = grad_h_theta_fcn(X, Xref, theta_r_dot, theta, J_m);
 dhdtheta = full(dhdtheta);
 
 % Assemble the Jacobians to compute the sensitivity
