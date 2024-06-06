@@ -1,7 +1,10 @@
 % Define the system dynamics (continuous time) here. 
 % It will be used in propagating the continuous dynamics.
+% X = [omega_m; omega_l; theta_m; theta_l]
 
 function dXdt = dynamics(t,X,u,param)
+omega_m = X(1);
+omega_l = X(2);
 
 J_m = param.J_m;
 T_Fm = param.T_Fm;
