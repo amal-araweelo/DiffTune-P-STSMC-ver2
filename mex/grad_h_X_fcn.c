@@ -34,13 +34,18 @@ extern "C" {
 #endif
 
 /* Add prefix to internal symbols */
+#define casadi_clear CASADI_PREFIX(clear)
+#define casadi_copy CASADI_PREFIX(copy)
 #define casadi_f0 CASADI_PREFIX(f0)
+#define casadi_fabs CASADI_PREFIX(fabs)
 #define casadi_fill CASADI_PREFIX(fill)
 #define casadi_from_mex CASADI_PREFIX(from_mex)
 #define casadi_s0 CASADI_PREFIX(s0)
 #define casadi_s1 CASADI_PREFIX(s1)
 #define casadi_s2 CASADI_PREFIX(s2)
 #define casadi_s3 CASADI_PREFIX(s3)
+#define casadi_sign CASADI_PREFIX(sign)
+#define casadi_sq CASADI_PREFIX(sq)
 #define casadi_to_mex CASADI_PREFIX(to_mex)
 
 /* Symbol visibility in DLLs */
@@ -57,6 +62,37 @@ extern "C" {
     #define CASADI_SYMBOL_EXPORT
   #endif
 #endif
+
+void casadi_clear(casadi_real* x, casadi_int n) {
+  casadi_int i;
+  if (x) {
+    for (i=0; i<n; ++i) *x++ = 0;
+  }
+}
+
+void casadi_copy(const casadi_real* x, casadi_int n, casadi_real* y) {
+  casadi_int i;
+  if (y) {
+    if (x) {
+      for (i=0; i<n; ++i) *y++ = *x++;
+    } else {
+      for (i=0; i<n; ++i) *y++ = 0.;
+    }
+  }
+}
+
+casadi_real casadi_sign(casadi_real x) { return x<0 ? -1 : x>0 ? 1 : x;}
+
+casadi_real casadi_fabs(casadi_real x) {
+/* Pre-c99 compatibility */
+#if __STDC_VERSION__ < 199901L
+  return x>0 ? x : -x;
+#else
+  return fabs(x);
+#endif
+}
+
+casadi_real casadi_sq(casadi_real x) { return x*x;}
 
 void casadi_fill(casadi_real* x, casadi_int n, casadi_real alpha) {
   casadi_int i;
@@ -187,10 +223,136 @@ mxArray* casadi_to_mex(const casadi_int* sp, const casadi_real* x) {
 static const casadi_int casadi_s0[8] = {4, 1, 0, 4, 0, 1, 2, 3};
 static const casadi_int casadi_s1[7] = {3, 1, 0, 3, 0, 1, 2};
 static const casadi_int casadi_s2[5] = {1, 1, 0, 1, 0};
-static const casadi_int casadi_s3[7] = {0, 4, 0, 0, 0, 0, 0};
+static const casadi_int casadi_s3[10] = {1, 4, 0, 1, 2, 2, 3, 0, 0, 0};
 
-/* grad_h_X_fcn:(i0[4],i1[4],i2[3],i3,i4,i5)->(o0[0x4]) */
+/* grad_h_X_fcn:(i0[4],i1[4],i2[3],i3,i4,i5,i6,i7)->(o0[1x4,3nz]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
+  casadi_real *rr, *ss;
+  casadi_real *w0=w+0, *w1=w+3, *w2=w+7, w3, w4, *w5=w+12, *w6=w+16, w7, w8, w9, w10, w11, w12;
+  /* #0: @0 = zeros(4x1,3nz) */
+  casadi_clear(w0, 3);
+  /* #1: @1 = zeros(4x1) */
+  casadi_clear(w1, 4);
+  /* #2: @2 = input[2][0] */
+  casadi_copy(arg[2], 3, w2);
+  /* #3: @3 = @2[2] */
+  for (rr=(&w3), ss=w2+2; ss!=w2+3; ss+=1) *rr++ = *ss;
+  /* #4: @4 = input[5][0] */
+  w4 = arg[5] ? arg[5][0] : 0;
+  /* #5: @4 = (@3*@4) */
+  w4  = (w3*w4);
+  /* #6: @4 = (-@4) */
+  w4 = (- w4 );
+  /* #7: (@1[1] += @4) */
+  for (rr=w1+1, ss=(&w4); rr!=w1+2; rr+=1) *rr += *ss++;
+  /* #8: @5 = input[0][0] */
+  casadi_copy(arg[0], 4, w5);
+  /* #9: @4 = @5[0] */
+  for (rr=(&w4), ss=w5+0; ss!=w5+1; ss+=1) *rr++ = *ss;
+  /* #10: @6 = input[1][0] */
+  casadi_copy(arg[1], 4, w6);
+  /* #11: @7 = @6[3] */
+  for (rr=(&w7), ss=w6+3; ss!=w6+4; ss+=1) *rr++ = *ss;
+  /* #12: @8 = @5[3] */
+  for (rr=(&w8), ss=w5+3; ss!=w5+4; ss+=1) *rr++ = *ss;
+  /* #13: @7 = (@7-@8) */
+  w7 -= w8;
+  /* #14: @7 = (@3*@7) */
+  w7  = (w3*w7);
+  /* #15: @8 = input[6][0] */
+  w8 = arg[6] ? arg[6][0] : 0;
+  /* #16: @9 = input[3][0] */
+  w9 = arg[3] ? arg[3][0] : 0;
+  /* #17: @8 = (@8*@9) */
+  w8 *= w9;
+  /* #18: @7 = (@7+@8) */
+  w7 += w8;
+  /* #19: @4 = (@4-@7) */
+  w4 -= w7;
+  /* #20: @7 = sign(@4) */
+  w7 = casadi_sign( w4 );
+  /* #21: @8 = @2[0] */
+  for (rr=(&w8), ss=w2+0; ss!=w2+1; ss+=1) *rr++ = *ss;
+  /* #22: @9 = 0.63662 */
+  w9 = 6.3661977236758138e-01;
+  /* #23: @10 = atan(@4) */
+  w10 = atan( w4 );
+  /* #24: @10 = (@9*@10) */
+  w10  = (w9*w10);
+  /* #25: @10 = (@8*@10) */
+  w10  = (w8*w10);
+  /* #26: @11 = fabs(@4) */
+  w11 = casadi_fabs( w4 );
+  /* #27: @11 = sqrt(@11) */
+  w11 = sqrt( w11 );
+  /* #28: @12 = (2.*@11) */
+  w12 = (2.* w11 );
+  /* #29: @10 = (@10/@12) */
+  w10 /= w12;
+  /* #30: @7 = (@7*@10) */
+  w7 *= w10;
+  /* #31: @7 = (-@7) */
+  w7 = (- w7 );
+  /* #32: @8 = (@8*@11) */
+  w8 *= w11;
+  /* #33: @9 = (@9*@8) */
+  w9 *= w8;
+  /* #34: @8 = 1 */
+  w8 = 1.;
+  /* #35: @11 = sq(@4) */
+  w11 = casadi_sq( w4 );
+  /* #36: @8 = (@8+@11) */
+  w8 += w11;
+  /* #37: @9 = (@9/@8) */
+  w9 /= w8;
+  /* #38: @7 = (@7-@9) */
+  w7 -= w9;
+  /* #39: @9 = 100 */
+  w9 = 100.;
+  /* #40: @8 = 0.63662 */
+  w8 = 6.3661977236758138e-01;
+  /* #41: @11 = @2[1] */
+  for (rr=(&w11), ss=w2+1; ss!=w2+2; ss+=1) *rr++ = *ss;
+  /* #42: @10 = input[7][0] */
+  w10 = arg[7] ? arg[7][0] : 0;
+  /* #43: @11 = (@11*@10) */
+  w11 *= w10;
+  /* #44: @8 = (@8*@11) */
+  w8 *= w11;
+  /* #45: @11 = 1 */
+  w11 = 1.;
+  /* #46: @4 = (@9*@4) */
+  w4  = (w9*w4);
+  /* #47: @4 = sq(@4) */
+  w4 = casadi_sq( w4 );
+  /* #48: @11 = (@11+@4) */
+  w11 += w4;
+  /* #49: @8 = (@8/@11) */
+  w8 /= w11;
+  /* #50: @9 = (@9*@8) */
+  w9 *= w8;
+  /* #51: @7 = (@7-@9) */
+  w7 -= w9;
+  /* #52: @3 = (@3*@7) */
+  w3 *= w7;
+  /* #53: (@1[3] += @3) */
+  for (rr=w1+3, ss=(&w3); rr!=w1+4; rr+=1) *rr += *ss++;
+  /* #54: (@1[0] += @7) */
+  for (rr=w1+0, ss=(&w7); rr!=w1+1; rr+=1) *rr += *ss++;
+  /* #55: @7 = @1[0] */
+  for (rr=(&w7), ss=w1+0; ss!=w1+1; ss+=1) *rr++ = *ss;
+  /* #56: (@0[0] = @7) */
+  for (rr=w0+0, ss=(&w7); rr!=w0+1; rr+=1) *rr = *ss++;
+  /* #57: @7 = @1[1] */
+  for (rr=(&w7), ss=w1+1; ss!=w1+2; ss+=1) *rr++ = *ss;
+  /* #58: (@0[1] = @7) */
+  for (rr=w0+1, ss=(&w7); rr!=w0+2; rr+=1) *rr = *ss++;
+  /* #59: @7 = @1[3] */
+  for (rr=(&w7), ss=w1+3; ss!=w1+4; ss+=1) *rr++ = *ss;
+  /* #60: (@0[2] = @7) */
+  for (rr=w0+2, ss=(&w7); rr!=w0+3; rr+=1) *rr = *ss++;
+  /* #61: output[0][0] = @0 */
+  casadi_copy(w0, 3, res[0]);
   return 0;
 }
 
@@ -222,7 +384,7 @@ CASADI_SYMBOL_EXPORT void grad_h_X_fcn_incref(void) {
 CASADI_SYMBOL_EXPORT void grad_h_X_fcn_decref(void) {
 }
 
-CASADI_SYMBOL_EXPORT casadi_int grad_h_X_fcn_n_in(void) { return 6;}
+CASADI_SYMBOL_EXPORT casadi_int grad_h_X_fcn_n_in(void) { return 8;}
 
 CASADI_SYMBOL_EXPORT casadi_int grad_h_X_fcn_n_out(void) { return 1;}
 
@@ -240,6 +402,8 @@ CASADI_SYMBOL_EXPORT const char* grad_h_X_fcn_name_in(casadi_int i) {
     case 3: return "i3";
     case 4: return "i4";
     case 5: return "i5";
+    case 6: return "i6";
+    case 7: return "i7";
     default: return 0;
   }
 }
@@ -259,6 +423,8 @@ CASADI_SYMBOL_EXPORT const casadi_int* grad_h_X_fcn_sparsity_in(casadi_int i) {
     case 3: return casadi_s2;
     case 4: return casadi_s2;
     case 5: return casadi_s2;
+    case 6: return casadi_s2;
+    case 7: return casadi_s2;
     default: return 0;
   }
 }
@@ -271,18 +437,18 @@ CASADI_SYMBOL_EXPORT const casadi_int* grad_h_X_fcn_sparsity_out(casadi_int i) {
 }
 
 CASADI_SYMBOL_EXPORT int grad_h_X_fcn_work(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w) {
-  if (sz_arg) *sz_arg = 6;
-  if (sz_res) *sz_res = 1;
+  if (sz_arg) *sz_arg = 10;
+  if (sz_res) *sz_res = 2;
   if (sz_iw) *sz_iw = 0;
-  if (sz_w) *sz_w = 0;
+  if (sz_w) *sz_w = 26;
   return 0;
 }
 
 CASADI_SYMBOL_EXPORT int grad_h_X_fcn_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, casadi_int *sz_iw, casadi_int *sz_w) {
-  if (sz_arg) *sz_arg = 6*sizeof(const casadi_real*);
-  if (sz_res) *sz_res = 1*sizeof(casadi_real*);
+  if (sz_arg) *sz_arg = 10*sizeof(const casadi_real*);
+  if (sz_res) *sz_res = 2*sizeof(casadi_real*);
   if (sz_iw) *sz_iw = 0*sizeof(casadi_int);
-  if (sz_w) *sz_w = 0*sizeof(casadi_real);
+  if (sz_w) *sz_w = 26*sizeof(casadi_real);
   return 0;
 }
 
@@ -290,23 +456,25 @@ CASADI_SYMBOL_EXPORT int grad_h_X_fcn_work_bytes(casadi_int *sz_arg, casadi_int*
 void mex_grad_h_X_fcn(int resc, mxArray *resv[], int argc, const mxArray *argv[]) {
   casadi_int i;
   int mem;
-  casadi_real w[18];
+  casadi_real w[45];
   casadi_int *iw = 0;
-  const casadi_real* arg[6] = {0};
-  casadi_real* res[1] = {0};
-  if (argc>6) mexErrMsgIdAndTxt("Casadi:RuntimeError","Evaluation of \"grad_h_X_fcn\" failed. Too many input arguments (%d, max 6)", argc);
+  const casadi_real* arg[10] = {0};
+  casadi_real* res[2] = {0};
+  if (argc>8) mexErrMsgIdAndTxt("Casadi:RuntimeError","Evaluation of \"grad_h_X_fcn\" failed. Too many input arguments (%d, max 8)", argc);
   if (resc>1) mexErrMsgIdAndTxt("Casadi:RuntimeError","Evaluation of \"grad_h_X_fcn\" failed. Too many output arguments (%d, max 1)", resc);
-  if (--argc>=0) arg[0] = casadi_from_mex(argv[0], w, casadi_s0, w+14);
-  if (--argc>=0) arg[1] = casadi_from_mex(argv[1], w+4, casadi_s0, w+14);
-  if (--argc>=0) arg[2] = casadi_from_mex(argv[2], w+8, casadi_s1, w+14);
-  if (--argc>=0) arg[3] = casadi_from_mex(argv[3], w+11, casadi_s2, w+14);
-  if (--argc>=0) arg[4] = casadi_from_mex(argv[4], w+12, casadi_s2, w+14);
-  if (--argc>=0) arg[5] = casadi_from_mex(argv[5], w+13, casadi_s2, w+14);
+  if (--argc>=0) arg[0] = casadi_from_mex(argv[0], w, casadi_s0, w+19);
+  if (--argc>=0) arg[1] = casadi_from_mex(argv[1], w+4, casadi_s0, w+19);
+  if (--argc>=0) arg[2] = casadi_from_mex(argv[2], w+8, casadi_s1, w+19);
+  if (--argc>=0) arg[3] = casadi_from_mex(argv[3], w+11, casadi_s2, w+19);
+  if (--argc>=0) arg[4] = casadi_from_mex(argv[4], w+12, casadi_s2, w+19);
+  if (--argc>=0) arg[5] = casadi_from_mex(argv[5], w+13, casadi_s2, w+19);
+  if (--argc>=0) arg[6] = casadi_from_mex(argv[6], w+14, casadi_s2, w+19);
+  if (--argc>=0) arg[7] = casadi_from_mex(argv[7], w+15, casadi_s2, w+19);
   --resc;
-  res[0] = w+14;
+  res[0] = w+16;
   grad_h_X_fcn_incref();
   mem = grad_h_X_fcn_checkout();
-  i = grad_h_X_fcn(arg, res, iw, w+14, mem);
+  i = grad_h_X_fcn(arg, res, iw, w+19, mem);
   if (i) mexErrMsgIdAndTxt("Casadi:RuntimeError","Evaluation of \"grad_h_X_fcn\" failed.");
   grad_h_X_fcn_release(mem);
   grad_h_X_fcn_decref();
@@ -320,22 +488,24 @@ casadi_int main_grad_h_X_fcn(casadi_int argc, char* argv[]) {
   const casadi_real* r;
   casadi_int flag;
   casadi_int *iw = 0;
-  casadi_real w[14];
-  const casadi_real* arg[6];
-  casadi_real* res[1];
+  casadi_real w[45];
+  const casadi_real* arg[10];
+  casadi_real* res[2];
   arg[0] = w+0;
   arg[1] = w+4;
   arg[2] = w+8;
   arg[3] = w+11;
   arg[4] = w+12;
   arg[5] = w+13;
-  res[0] = w+14;
+  arg[6] = w+14;
+  arg[7] = w+15;
+  res[0] = w+16;
   a = w;
-  for (j=0; j<14; ++j) if (scanf("%lg", a++)<=0) return 2;
-  flag = grad_h_X_fcn(arg, res, iw, w+14, 0);
+  for (j=0; j<16; ++j) if (scanf("%lg", a++)<=0) return 2;
+  flag = grad_h_X_fcn(arg, res, iw, w+19, 0);
   if (flag) return flag;
-  r = w+14;
-  for (j=0; j<0; ++j) CASADI_PRINTF("%g ", *r++);
+  r = w+16;
+  for (j=0; j<3; ++j) CASADI_PRINTF("%g ", *r++);
   CASADI_PRINTF("\n");
   return 0;
 }

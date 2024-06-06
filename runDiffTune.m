@@ -141,7 +141,7 @@ while (1)
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta,X,Xref,theta_r_dot(k),u,param,k_vec,dt);
+        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
         
         % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
         loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l         
