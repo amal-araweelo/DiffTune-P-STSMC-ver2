@@ -16,7 +16,9 @@
 
 % ud: containing motor/load angular velocity/position (4outputs)
 
-function ud = controller(X, Xref, k_vec, theta_r_dot, param, t, dt) % t for time
+function ud = controller(X, Xref, k_vec, theta_r_dot, param, dt) % t for time
+    global v;
+
     % Controller gains
     k1 = k_vec(1);
     k2 = k_vec(2);
@@ -43,8 +45,15 @@ function ud = controller(X, Xref, k_vec, theta_r_dot, param, t, dt) % t for time
 
     % STSMC controller
     s = omega_m - omega_r; % Error
-    %v_dot = -k2 * sgn_approx(s);
-    u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) - k2 * int_sgn_approx(s);
+    v_dot = -k2 * sgn_approx(s);
+
+    
+    if (isempty(v))
+        v = 0;
+    end
+    v = v + v_dot * dt;
+
+    u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + v; 
     u = u_smc + J_m * omega_r_dot;
     
     % Output
