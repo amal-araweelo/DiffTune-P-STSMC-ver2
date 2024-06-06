@@ -33,6 +33,7 @@
 
 close all;
 clear all;
+clc;
 
 addpath('mex\');
 import casadi.*
@@ -89,16 +90,16 @@ param.inv_J_l = param.J_l;
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
-k1 = 1.453488372 * 2.45 * 0.99; % use proportional gain from PI controller (k_vel = 1.45*2.45)
-k2 = 50;
-k_pos = 25;      % ignored when hand-tuning STSMC
+k1 = 1;
+k2 = 1;
+k_pos = 1;      % ignored when hand-tuning STSMC
 k_vec = [k1; k2; k_pos];
 
 
 %% Define desired trajectory if necessary
 theta_r = sin(2*pi*time);   % theta_r is a sine wave with frequency 1 kHz
 theta_r_dot = 2 * pi * cos(2*pi*time);
-
+theta_r_2dot = -4 * pi^2 * sin(2*pi*time);
 
 %% Initialize variables for DiffTune iterations
 learningRate = 2;  % Calculate  
@@ -137,10 +138,10 @@ while (1)
         Xref = Xref_storage(:,end);
  
         % Compute the control action
-        u = controller(X, Xref, k_vec, theta_r_dot(k), param.J_m, param.N, dt); 
+        u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta,X,Xref,theta_r_dot,u,param,k_vec,dt);
+        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta,X,Xref,theta_r_dot(k),u,param,k_vec,dt);
         
         % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
         loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l         
@@ -161,6 +162,9 @@ while (1)
         X_storage = [X_storage sold(end,:)'];
         
     end
+
+    % Clear global variable
+    clear v;
 
     % Compute the RSME (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
