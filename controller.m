@@ -30,6 +30,7 @@ function ud = controller(X, Xref, k_vec, theta_r_dot, param, dt) % t for time
     theta_m = X(3);
     theta_l = X(4);
 
+    % Reference states
     omega_l_ref  = Xref(2);
     theta_m_ref  = Xref(3);
     theta_l_ref = Xref(4); % theta_l_ref = theta_r
@@ -46,9 +47,8 @@ function ud = controller(X, Xref, k_vec, theta_r_dot, param, dt) % t for time
     % STSMC controller
     s = omega_m - omega_r; % Error
     v_dot = -k2 * sgn_approx(s);
-
     
-    if (isempty(v))
+    if (isempty(v)) % initialise v to zero in first iteration
         v = 0;
     end
     v = v + v_dot * dt;
