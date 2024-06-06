@@ -57,6 +57,7 @@ k_pos = k_vec(3);
 u = MX.sym('u', 1);    % ændret fordi det u vi bruger her er inputtet til systemet u og er 1 dimensionelt.
 
 %% Define the dynamics (discretized via Forward Euler)
+
 dynamics = X + dt * [1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l;
                     omega_m;
                     T_l/J_l - T_Fl/J_l;
@@ -74,8 +75,8 @@ grad_h_theta = jacobian(h,k_vec);
 %% Function-lize the generated jacobians
 
 % inputs_f denotes the input arguments to the dynamics
-grad_f_X_fcn = Function('grad_f_X_fcn',{X, dt, u, J_m, T_Fm, N, T_l, J_l, T_Fl},{grad_f_X});
-grad_f_u_fcn = Function('grad_h_u_fcn',{X, dt, u, J_m, T_Fm, N, T_l, J_l, T_Fl},{grad_f_u});
+grad_f_X_fcn = Function('grad_f_X_fcn',{X, dt, u, J_m, N, J_l},{grad_f_X});
+grad_f_u_fcn = Function('grad_h_u_fcn',{X, dt, u, J_m, N, J_l},{grad_f_u});
 
 % inputs_h denote the input arguments to the controller
 grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, J_m, dt},{grad_h_X});
