@@ -59,7 +59,7 @@ time = 0:dt:10;
 % Motor electrical parameters
 param.r_s = 3.6644;           % Ohm -- Stator winding resistance (per phase)
 param.L_d = 21.4e-3;          % mH -- Rotating field inductance
-param.L_q = 1.2*L_d;          % mH -- Rotating torque inductance
+param.L_q = 1.2*param.L_d;          % mH -- Rotating torque inductance
 param.P = 6;                  % Non-dimensional -- Number of poles
 param.k_T = 1.43;             % Nm/A -- Torque constant
 param.k_E = 87*2*pi*60*0.001; % Vs/rad -- Voltage constant
@@ -142,7 +142,7 @@ while (1)
         Xref = Xref_storage(:,end);
  
         % Compute the control action
-        u = controller(X, Xref, k_vec, theta_r_dot(k), param.J_m, dt); 
+        u = controller(X, Xref, k_vec, theta_r_dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
         [dx_dtheta, du_dtheta] = sensitivityComputation(sensitivity,X,Xref,theta_r_dot,u,param,k_vec,dt);
