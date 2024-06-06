@@ -142,7 +142,7 @@ while (1)
         Xref = Xref_storage(:,end);
  
         % Compute the control action
-        u = controller(X, Xref, k_vec, theta_r_dot(k), param, dt); 
+        u = controller(X, Xref, k_vec, theta_r_dot(k), param.J_m, dt); 
 
         % Compute the sensitivity 
         [dx_dtheta, du_dtheta] = sensitivityComputation(sensitivity,X,Xref,theta_r_dot,u,param,k_vec,dt);
