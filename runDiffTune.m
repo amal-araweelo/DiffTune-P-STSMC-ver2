@@ -39,7 +39,7 @@ import casadi.*
 
 %% define the dimensions
 dim_state = 4; % dimension of system state
-dim_control = 1;  % dimension of control inputs
+dim_control = 3;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Video simulation
