@@ -201,7 +201,7 @@ while (1)
     param_hist = [param_hist k_vec];
 
     % Plotting
-    set(gcf,'Position',[472 320 950 455]);
+    set(gcf,'Position',[172 120 950 455]);
     set(gcf,'color','w');
 
     % Position (theta_l) tracking
