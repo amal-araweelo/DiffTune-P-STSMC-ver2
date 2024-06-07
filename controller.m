@@ -49,12 +49,11 @@ function ud = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt) 
     v = v + v_dot * dt;
 
     u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + v;
-    fprintf('omega_r = %d \n', omega_r);
-    fprintf('omega_r_dot = %d \n', omega_r_dot);
+    % fprintf('omega_r_dot = %d \n', omega_r_dot);
     u = u_smc + J_m * omega_r_dot;
-    fprintf('u = %d \n', u);
+    % fprintf('u = %d \n', u);
 
     % Output
     ud = u;
-    fprintf('ud = %d \n', ud);
+    % fprintf('ud = %d \n', ud);
 end 

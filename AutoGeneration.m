@@ -42,6 +42,7 @@ theta_r = Xref(4);
 % Load the desired values into a struct
 desired = MX.sym('theta_r', 1);
 theta_r_dot = MX.sym('theta_r_dot', 1);
+theta_r_2dot = MX.sym('theta_r_2dot', 1);
 
 %% k is the collection of controller parameters 
 k_vec = MX.sym('k_vec',dim_controllerParameters); % gains for P-STSMC
@@ -64,7 +65,7 @@ dynamics = X + dt * [1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l;
                     omega_l]; 
                     
 %% Compute the control action, denoted by h
-h = controller(X, Xref, k_vec, theta_r_dot, J_m, N, dt); % Xref(4) = theta_r is the desired trajectory
+h = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt); % Xref(4) = theta_r is the desired trajectory
 
 %% Generate jacobians
 grad_f_X = jacobian(dynamics,X);
@@ -76,11 +77,11 @@ grad_h_theta = jacobian(h,k_vec);
 
 % inputs_f denotes the input arguments to the dynamics
 grad_f_X_fcn = Function('grad_f_X_fcn',{X, dt, u, J_m, N, J_l},{grad_f_X});
-grad_f_u_fcn = Function('grad_h_u_fcn',{X, dt, u, J_m, N, J_l},{grad_f_u});
+grad_f_u_fcn = Function('grad_f_u_fcn',{X, dt, u, J_m, N, J_l},{grad_f_u});
 
 % inputs_h denote the input arguments to the controller
-grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, J_m, dt},{grad_h_X});
-grad_h_theta_fcn = Function('grad_h_theta_fcn',{X, Xref, k_vec, theta_r_dot, J_m, dt},{grad_h_theta});
+grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_X});
+grad_h_theta_fcn = Function('grad_h_theta_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_theta});
 
 %% Generate mex functions
 opts = struct('main', true,...

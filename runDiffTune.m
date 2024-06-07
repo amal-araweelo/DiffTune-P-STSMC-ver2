@@ -6,7 +6,7 @@
 % J_m: Motor inertia
 % J_l: Load inertia
 % K_S: Shaft stifness
-% D_s: Shaft damping coefficinet
+% D_S: Shaft damping coefficinet
 % T_Cm: Motor Coulomb friction
 % T_Sm: Motor static friction coefficient
 % omega_s: Motor Stribeck velocity
@@ -46,7 +46,7 @@ dim_controllerParameters = 3;  % dimension of controller parameters
 %% Video simulation
 param.generateVideo = true;
 if param.generateVideo
-    video_obj = VideoWriter('DubinCar.mp4','MPEG-4');
+    video_obj = VideoWriter('DriveTrain.mp4','MPEG-4');
     video_obj.FrameRate = 15;
     open(video_obj);
 end
@@ -97,9 +97,10 @@ k_vec = [k1; k2; k_pos];
 
 
 %% Define desired trajectory if necessary
-theta_r = sin(2*pi*time);   % theta_r is a sine wave with frequency 1 kHz
-theta_r_dot = 2 * pi * cos(2*pi*time);
-theta_r_2dot = -4 * pi^2 * sin(2*pi*time);
+freq = 1;   % 1 rad/s   (mere korrekt hvis 2*pi)
+theta_r = sin(freq * time);   % theta_r is a sine wave with frequency 1 kHz
+theta_r_dot = freq * cos(freq * time);
+theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
 learningRate = 2;  % Calculate  
@@ -141,7 +142,7 @@ while (1)
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta,X,Xref,theta_r_dot(k),u,param,k_vec,dt);
+        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
         
         % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
         loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l         
@@ -156,17 +157,19 @@ while (1)
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref(4)] * dx_dtheta;
 
         % Integrate the ode dynamics
-        [~, sold] = ode45(@(t,X) dynamics(t, X, u, param), [time(k) time(k+1)], X);
-        
-        % Store the new state
-        X_storage = [X_storage sold(end,:)'];
+        [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
+        X_storage = [X_storage sold(end,:)'];   % store the new state
+
+        % Integrate the reference system to obtain the reference state
+        [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_dot(k), param),[time(k) time(k+1)],Xref);
+        Xref_storage = [Xref_storage solref(end,:)'];
         
     end
 
     % Clear global variable
     clear v;
 
-    % Compute the RSME (root-mean-square error)
+    % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
 
     % Store loss and RMSE
@@ -192,7 +195,7 @@ while (1)
     if any(k_vec < 0.1)
        neg_indicator = (k_vec < 0.1);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.1 * ones(4,1);
+       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
 
@@ -205,9 +208,9 @@ while (1)
 
     % Position (theta_l) tracking
     subplot(3,3,[1,2]);
-    plot(t,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
+    plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
     hold on;
-    plot(t,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
+    plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
     xlabel('time [s]');
     ylabel('\theta_l [rad]');
     grid on;
@@ -217,14 +220,14 @@ while (1)
 
     % RMSE
     subplot(3,3,[3;6;9]);
-    plot(rmse_history,'LineWidth',1.5);
+    plot(rmse_hist,'LineWidth',1.5);
     hold on;
     grid on;
-    stem(length(rmse_history),rmse_history(end),'Color',[0 0.4470 0.7410]);
+    stem(length(rmse_hist),rmse_hist(end),'Color',[0 0.4470 0.7410]);
 
     xlim([0 100]);
-    ylim([0 rmse_history(1)*1.1]);
-    text(50,0.3,['iteration = ' num2str(length(rmse_history))],'FontSize',12);
+    ylim([0 rmse_hist(1)*1.1]);
+    text(50,0.3,['iteration = ' num2str(length(rmse_hist))],'FontSize',12);
     xlabel('iterations');
     ylabel('RMSE [rad]');
     set(gca,'FontSize',10);
