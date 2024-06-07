@@ -157,7 +157,7 @@ while (1)
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref(4)] * dx_dtheta;
 
         % Integrate the ode dynamics
-        [~, sold] = ode45(@(t,X) dynamics(t, X, u, param), [time(k) time(k+1)], X);
+        [~, sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
         
         % Store the new state
         X_storage = [X_storage sold(end,:)'];
@@ -167,7 +167,7 @@ while (1)
     % Clear global variable
     clear v;
 
-    % Compute the RSME (root-mean-square error)
+    % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
 
     % Store loss and RMSE
@@ -206,26 +206,26 @@ while (1)
 
     % Position (theta_l) tracking
     subplot(3,3,[1,2]);
-    plot(t,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
+    plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
     hold on;
-    plot(t,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
+    plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
     xlabel('time [s]');
     ylabel('\theta_l [rad]');
     grid on;
-    h_lgd = legend;
+    % h_lgd = legend;
     set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
     set(gca,'FontSize',10);
 
     % RMSE
     subplot(3,3,[3;6;9]);
-    plot(rmse_history,'LineWidth',1.5);
+    plot(rmse_hist,'LineWidth',1.5);
     hold on;
     grid on;
-    stem(length(rmse_history),rmse_history(end),'Color',[0 0.4470 0.7410]);
+    stem(length(rmse_hist),rmse_hist(end),'Color',[0 0.4470 0.7410]);
 
     xlim([0 100]);
-    ylim([0 rmse_history(1)*1.1]);
-    text(50,0.3,['iteration = ' num2str(length(rmse_history))],'FontSize',12);
+    ylim([0 rmse_hist(1)*1.1]);
+    text(50,0.3,['iteration = ' num2str(length(rmse_hist))],'FontSize',12);
     xlabel('iterations');
     ylabel('RMSE [rad]');
     set(gca,'FontSize',10);
