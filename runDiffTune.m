@@ -157,10 +157,12 @@ while (1)
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref(4)] * dx_dtheta;
 
         % Integrate the ode dynamics
-        [~, sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
-        
-        % Store the new state
-        X_storage = [X_storage sold(end,:)'];
+        [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
+        X_storage = [X_storage sold(end,:)'];   % store the new state
+
+        % Integrate the reference system to obtain the reference state
+        [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_dot(k), param),[time(k) time(k+1)],Xref);
+        Xref_storage = [Xref_storage solref(end,:)'];
         
     end
 
@@ -193,7 +195,7 @@ while (1)
     if any(k_vec < 0.1)
        neg_indicator = (k_vec < 0.1);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.1 * ones(4,1);
+       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
 
@@ -212,7 +214,7 @@ while (1)
     xlabel('time [s]');
     ylabel('\theta_l [rad]');
     grid on;
-    % h_lgd = legend;
+    h_lgd = legend;
     set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
     set(gca,'FontSize',10);
 
