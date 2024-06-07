@@ -1,6 +1,6 @@
 # Auto-tuning of a P-STSMC controller applied to a machine tool drive train (via DiffTune+)
 
-To read more on the DiffTune+-tool set visit the following repository: [](https://github.com/Sheng-Cheng/DiffTuneOpenSource/tree/main)
+To read more on the DiffTune+ tool set visit the following repository: [](https://github.com/Sheng-Cheng/DiffTuneOpenSource/tree/main)
 
 ## Pre-requisites
 * Install [casADI](https://web.casadi.org/get/) and add casADi's directory to your MATLAB's path. 
