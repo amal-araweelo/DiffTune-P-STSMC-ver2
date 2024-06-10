@@ -36,6 +36,7 @@ clear all;
 clc;
 
 addpath('mex\');
+addpath('Common\');
 import casadi.*
 
 %% define the dimensions
@@ -207,12 +208,12 @@ while (1)
     % the feasible set of parameters in this case is greater than 0.1
     % (taken from template)
     % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.5)
-       neg_indicator = (k_vec < 0.5);
-       pos_indicator = ~neg_indicator;
-       k_vec_default = 0.5 * ones(dim_controllerParameters,1);
-       k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
-    end
+    % if any(k_vec < 0.5)
+    %    neg_indicator = (k_vec < 0.5);
+    %    pos_indicator = ~neg_indicator;
+    %    k_vec_default = 0.5 * ones(dim_controllerParameters,1);
+    %    k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
+    % end
 
     fprintf('k_vec = \n');
     disp(k_vec);
