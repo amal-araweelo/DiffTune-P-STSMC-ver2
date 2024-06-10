@@ -29,6 +29,7 @@ dfdu = full(dfdu);
 
 dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param.J_m, param.N, dt);
 dhdX = full(dhdX);
+disp(dhdX(1,3))
 % fprintf('dhdX = \n');
 % disp(dhdX);
 
@@ -38,7 +39,7 @@ dhdtheta = full(dhdtheta);
 % disp(dhdtheta);
 
 % Assemble the Jacobians to compute the sensitivity
-dXdphi = (dfdX + dfdu * dhdX) * dxdtheta_current + dfdu * dhdtheta;
+dXdphi = (dfdX + dfdu * dhdX) * dxdtheta_current + dfdu * dhdtheta
 dudphi = dhdX * dxdtheta_current + dhdtheta;
 
 end
