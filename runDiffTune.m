@@ -36,11 +36,12 @@ clear all;
 clc;
 
 addpath('mex\');
+addpath('Common\');
 import casadi.*
 
 %% define the dimensions
 dim_state = 4; % dimension of system state
-dim_control = 3;  % dimension of control inputs
+dim_control = 1;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Video simulation
@@ -90,9 +91,9 @@ param.inv_J_l = param.J_l;
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
-k1 = 1;
-k2 = 1;
-k_pos = 1;      % ignored when hand-tuning STSMC
+k1 = 5;
+k2 = 5;
+k_pos = 5;      % ignored when hand-tuning STSMC
 k_vec = [k1; k2; k_pos];
 
 %% Define desired trajectory if necessary
@@ -114,10 +115,12 @@ gradientUpdate = zeros(dim_controllerParameters,1); % define the parameter updat
 %% DiffTune iterations
 while (1)
     itr = itr + 1;
+    fprintf('------------------------\n');
     fprintf('itr = %d \n', itr);
+    itr = itr + 1;
 
     % Initialize state
-    X_storage = zeros(dim_state, 1);
+    X_storage = zeros(dim_state,1);
     
     % Initialize sensitivity
     dx_dtheta = zeros(dim_state, dim_controllerParameters);
@@ -126,11 +129,6 @@ while (1)
     % Initialize loss and gradient of loss
     loss = 0;
     theta_gradient = zeros(1, dim_controllerParameters);
-
-    % Initialize reference state based on the desired trajectory
-    % Xref_storage = [X_storage(1:3); theta_r(1)];
-    % Xref_storage = zeros(dim_state, 1);
-    % Xref_storage(4, 1) = theta_r(1);
 
     for k = 1 : length(time) - 1
        
@@ -147,9 +145,8 @@ while (1)
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);       
-        disp(dx_dtheta)
-        
+        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
+
         % Accumulate the loss
         % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
         loss = loss + (Xref - X(4))^2;
@@ -161,21 +158,29 @@ while (1)
         % We then have:
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
-        theta_gradient = theta_gradient + 2 * [0 0 0 (X(4) - Xref)] * dx_dtheta;
+        theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref] * dx_dtheta;
 
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
         X_storage = [X_storage sold(end,:)'];   % store the new state
-
-        % Integrate the reference system to obtain the reference state
-        % [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_2dot(k), param),[time(k) time(k+1)],Xref);
-        % Xref_storage = [Xref_storage solref(end,:)'];
-        % Xref_storage = [Xref_storage [0; 0; 0; theta_r(k)]];
         
     end
 
+    fprintf('dx_dtheta = \n');
+    disp(dx_dtheta);
+
+    fprintf('loss = \n');
+    disp(loss);
+
+    fprintf('theta_gradient = \n');
+    disp(theta_gradient);
+
     % Clear global variable
     clear v;
+
+    % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
+    % loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l
+    % loss = trace([X_storage(:,1:end)-Xref_storage(:,1:end)]'*diag([1 0 0 0]) * [X_storage(:,1:end)-Xref_storage(:,1:end)]);
 
     % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
@@ -185,11 +190,14 @@ while (1)
     rmse_hist = [rmse_hist RMSE];
 
     % Update the gradient
-    gradientUpdate = -learningRate * theta_gradient;
+    gradientUpdate = - learningRate * theta_gradient;
+    
+    fprintf('gradientUpdate = \n');
+    disp(gradientUpdate);
 
     % Sanity check
     if isnan(gradientUpdate)
-       fprintf('gradient is NaN. Quit.\n');
+       fprintf('gradient is NAN. Quit.\n');
        break;
     end
    
@@ -200,26 +208,28 @@ while (1)
     % the feasible set of parameters in this case is greater than 0.1
     % (taken from template)
     % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.1)
-       neg_indicator = (k_vec < 0.1);
+    if any(k_vec < 0.5)
+       neg_indicator = (k_vec < 0.5);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
+       k_vec_default = 0.5 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
+
+    fprintf('k_vec = \n');
+    disp(k_vec);
 
     % store the parameters
     param_hist = [param_hist k_vec];
 
     % Plotting
-    set(gcf,'Position',[172 120 950 455]);
+    % set(gcf,'Position',[172 120 950 455]);
     set(gcf,'color','w');
 
     % Position (theta_l) tracking
     subplot(3,3,[1,2;4,5]);
     plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
     hold on;
-    % plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
-    plot(time,theta_r,':','DisplayName','desired','LineWidth',1.5);
+    plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
     xlabel('time [s]');
     ylabel('\theta_l [rad]');
     grid on;
@@ -264,11 +274,10 @@ end
 
 %% Plot trajectory
 figure();
-plot(time, theta_r,'DisplayName','theta_r');
+plot(time, Xref_storage(4,:),'DisplayName','theta_r');
 hold on;
 plot(time, X_storage(4,:),'DisplayName','theta_l');
 legend;
-xlabel('time [s]');
 ylabel('\theta [rad]');
 
 %% Debug session
