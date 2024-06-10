@@ -90,9 +90,9 @@ param.inv_J_l = param.J_l;
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
-k1 = 1;
-k2 = 1;
-k_pos = 1;      % ignored when hand-tuning STSMC
+k1 = 5;
+k2 = 5;
+k_pos = 5;      % ignored when hand-tuning STSMC
 k_vec = [k1; k2; k_pos];
 
 %% Define desired trajectory if necessary
@@ -114,6 +114,7 @@ gradientUpdate = zeros(dim_controllerParameters,1); % define the parameter updat
 %% DiffTune iterations
 while (1)
     itr = itr + 1;
+    fprintf('------------------------\n');
     fprintf('itr = %d \n', itr);
 
     % Initialize state
@@ -147,7 +148,7 @@ while (1)
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);       
+        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
 
         % Accumulate the loss
         % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
@@ -160,7 +161,7 @@ while (1)
         % We then have:
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
-        theta_gradient = theta_gradient + 2 * [0 0 0 (X(4) - Xref)] * dx_dtheta;
+        theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref] * dx_dtheta;
 
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
@@ -173,6 +174,15 @@ while (1)
         
     end
 
+    fprintf('dx_dtheta = \n');
+    disp(dx_dtheta);
+
+    fprintf('loss = \n');
+    disp(loss);
+
+    fprintf('theta_gradient = \n');
+    disp(theta_gradient);
+
     % Clear global variable
     clear v;
 
@@ -184,7 +194,10 @@ while (1)
     rmse_hist = [rmse_hist RMSE];
 
     % Update the gradient
-    gradientUpdate = -learningRate * theta_gradient;
+    gradientUpdate = - learningRate * theta_gradient;
+    
+    fprintf('gradientUpdate = \n');
+    disp(gradientUpdate);
 
     % Sanity check
     if isnan(gradientUpdate)
@@ -199,18 +212,21 @@ while (1)
     % the feasible set of parameters in this case is greater than 0.1
     % (taken from template)
     % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.1)
-       neg_indicator = (k_vec < 0.1);
+    if any(k_vec < 0.5)
+       neg_indicator = (k_vec < 0.5);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
+       k_vec_default = 0.5 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
+
+    fprintf('k_vec = \n');
+    disp(k_vec);
 
     % store the parameters
     param_hist = [param_hist k_vec];
 
     % Plotting
-    set(gcf,'Position',[172 120 950 455]);
+    % set(gcf,'Position',[172 120 950 455]);
     set(gcf,'color','w');
 
     % Position (theta_l) tracking
