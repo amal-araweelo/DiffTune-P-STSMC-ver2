@@ -83,6 +83,8 @@ grad_f_u_fcn = Function('grad_f_u_fcn',{X, dt, u, J_m, N, J_l},{grad_f_u});
 grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_X});
 grad_h_theta_fcn = Function('grad_h_theta_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_theta});
 
+%calculate gradient only with respect to that variable
+
 %% Generate mex functions
 opts = struct('main', true,...
               'mex', true);

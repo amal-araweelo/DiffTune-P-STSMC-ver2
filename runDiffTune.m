@@ -149,6 +149,10 @@ while (1)
         % Compute the sensitivity 
         [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);       
 
+        % Accumulate the loss
+        % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
+        loss = loss + (Xref(4) - X(4))^2;
+
         % Accumulating the gradient of loss w/ respect to controller parameters
         % You need to provide dloss_dx and dloss_du here
         % dloss_dx = 2 * (X - Xref);  % gradient of loss function w/ respect to state (see notes)
@@ -171,13 +175,6 @@ while (1)
 
     % Clear global variable
     clear v;
-
-    % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
-    % loss = loss + norm(Xref_storage(4) - X_storage(4))^2;
-    % loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l
-    % loss = trace([X_storage(:,1:end)-Xref_storage(:,1:end)]'*diag([0 0 0 1]) * [X_storage(:,1:end)-Xref_storage(:,1:end)]);
-    loss = trace((X_storage(4,:) - Xref_storage(4,:))' * (X_storage(4,:) - Xref_storage(4,:)));
-    % loss = (Xref_storage(4) - X_storage(4))^2;  % error_theta = theta_r - theta_l
 
     % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
