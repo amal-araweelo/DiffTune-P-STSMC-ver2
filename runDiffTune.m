@@ -40,7 +40,7 @@ import casadi.*
 
 %% define the dimensions
 dim_state = 4; % dimension of system state
-dim_control = 3;  % dimension of control inputs
+dim_control = 1;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Video simulation
@@ -135,8 +135,13 @@ while (1)
     for k = 1 : length(time) - 1
        
         % Load current state and current reference
-        X = X_storage(:,end);
+        X = X_storage(:,end);   % X = [omega_m; omega_l; theta_m; theta_l]
         Xref = Xref_storage(:,end);
+
+        % Values used in dynamics calculations
+        param.T_l = param.K_S*(X(3)/param.N - X(4)) + param.D_S*(X(1)/param.N - X(2));
+        param.T_Fm = X(1)*param.b_fr + sgn_approx(X(1)*10)*param.T_C;
+        param.T_Fl = X(2)*param.b_fr + sgn_approx(X(1)*10)*param.T_C + 0;
  
         % Compute the control action
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
@@ -201,6 +206,46 @@ while (1)
 
     % Store the parameters
     param_hist = [param_hist k_vec];
+<<<<<<< Updated upstream
+=======
+    
+    subplot(1,3,[1 2]);
+    plot(time,Xref_storage(4,:),'DisplayName','theta\_r');
+    hold on;
+    plot(time,X_storage(4,:),'DisplayName','theta\_l');
+
+    axis equal
+    xlabel('time [s]');
+    ylabel('theta [rad]');
+    legend;
+
+    % rmse
+    subplot(1,3,3);
+    plot(rmse_hist,'LineWidth',1.5);
+    hold on;
+    grid on;
+    stem(length(rmse_hist),rmse_hist(end),'Color',[0 0.4470 0.7410]);
+
+    xlim([0 100]);
+    ylim([0 rmse_hist(1)*1.1]);
+    text(50,0.3,['iteration = ' num2str(length(rmse_hist))],'FontSize',12);
+    xlabel('iterations');
+    ylabel('RMSE [m]');
+    set(gca,'FontSize',10);
+    plotedit(gca,'on');
+    plotedit(gca,'off');
+
+    set(gcf,'Position',[172 120 950 455]);
+
+    drawnow;
+
+    % visualization for movie
+    if param.generateVideo
+        frame = getframe(gcf);
+        writeVideo(video_obj,frame);
+        clf
+    end
+>>>>>>> Stashed changes
 
     % Plotting
     set(gcf,'Position',[172 120 950 455]);
