@@ -7,7 +7,7 @@ import casadi.*;
 
 %% Define the dimensions
 dim_state = 4; % dimension of system state (omega_m, theta_m, omega_r, theta_r)
-dim_control = 3;  % dimension of control inputs (u, theta_r, omega_r)
+dim_control = 1;  % dimension of control inputs (u, theta_r, omega_r)
 dim_controllerParameters = 3;  % dimension of controller parameters (k_1, k_2, k_pos)
 
 %% Load constant physical parameters
@@ -33,7 +33,7 @@ T_l = MX.sym('T_l', 1);         % T_l: Load torque
 
 %% casADI-lize all the variables in the computation
 X = MX.sym('X', dim_state);        % system state
-Xref = MX.sym('Xref', 1);  % system reference state
+Xref = MX.sym('Xref', dim_state);  % system reference state
 
 % Elementwise split of the necessary states
 omega_m = X(1);
@@ -60,8 +60,8 @@ u = MX.sym('u', 1);    % ændret fordi det u vi bruger her er inputtet til syste
 
 %% Define the dynamics (discretized via Forward Euler)
 dynamics = X + dt * [1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l;
-                    T_l/J_l - T_Fl/J_l;
                     omega_m;
+                    T_l/J_l - T_Fl/J_l;
                     omega_l]; 
                     
 %% Compute the control action, denoted by h
@@ -82,8 +82,6 @@ grad_f_u_fcn = Function('grad_f_u_fcn',{X, dt, u, J_m, N, J_l},{grad_f_u});
 % inputs_h denote the input arguments to the controller
 grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_X});
 grad_h_theta_fcn = Function('grad_h_theta_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_theta});
-
-%calculate gradient only with respect to that variable
 
 %% Generate mex functions
 opts = struct('main', true,...
