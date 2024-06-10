@@ -41,15 +41,12 @@ extern "C" {
 #define casadi_f0 CASADI_PREFIX(f0)
 #define casadi_fill CASADI_PREFIX(fill)
 #define casadi_from_mex CASADI_PREFIX(from_mex)
-#define casadi_project CASADI_PREFIX(project)
 #define casadi_s0 CASADI_PREFIX(s0)
 #define casadi_s1 CASADI_PREFIX(s1)
 #define casadi_s2 CASADI_PREFIX(s2)
 #define casadi_s3 CASADI_PREFIX(s3)
 #define casadi_s4 CASADI_PREFIX(s4)
 #define casadi_s5 CASADI_PREFIX(s5)
-#define casadi_s6 CASADI_PREFIX(s6)
-#define casadi_s7 CASADI_PREFIX(s7)
 #define casadi_to_mex CASADI_PREFIX(to_mex)
 #define casadi_trans CASADI_PREFIX(trans)
 
@@ -112,17 +109,10 @@ void casadi_densify(const casadi_real* x, const casadi_int* sp_x, casadi_real* y
   }
 }
 
-void casadi_project(const casadi_real* x, const casadi_int* sp_x, casadi_real* y, const casadi_int* sp_y, casadi_real* w) {
-  casadi_int ncol_x, ncol_y, i, el;
-  const casadi_int *colind_x, *row_x, *colind_y, *row_y;
-  ncol_x = sp_x[1];
-  colind_x = sp_x+2; row_x = sp_x + 2 + ncol_x+1;
-  ncol_y = sp_y[1];
-  colind_y = sp_y+2; row_y = sp_y + 2 + ncol_y+1;
-  for (i=0; i<ncol_x; ++i) {
-    for (el=colind_y[i]; el<colind_y[i+1]; ++el) w[row_y[el]] = 0;
-    for (el=colind_x[i]; el<colind_x[i+1]; ++el) w[row_x[el]] = x[el];
-    for (el=colind_y[i]; el<colind_y[i+1]; ++el) y[el] = w[row_y[el]];
+void casadi_fill(casadi_real* x, casadi_int n, casadi_real alpha) {
+  casadi_int i;
+  if (x) {
+    for (i=0; i<n; ++i) *x++ = alpha;
   }
 }
 
@@ -138,13 +128,6 @@ void casadi_trans(const casadi_real* x, const casadi_int* sp_x, casadi_real* y,
   for (k=0; k<ncol_y; ++k) tmp[k] = colind_y[k];
   for (k=0; k<nnz_x; ++k) {
     y[tmp[row_x[k]]++] = x[k];
-  }
-}
-
-void casadi_fill(casadi_real* x, casadi_int n, casadi_real alpha) {
-  casadi_int i;
-  if (x) {
-    for (i=0; i<n; ++i) *x++ = alpha;
   }
 }
 
@@ -267,16 +250,14 @@ mxArray* casadi_to_mex(const casadi_int* sp, const casadi_real* x) {
 #endif
 #endif
 
-static const casadi_int casadi_s0[5] = {4, 1, 0, 1, 1};
-static const casadi_int casadi_s1[4] = {0, 1, 3, 5};
-static const casadi_int casadi_s2[6] = {4, 1, 0, 2, 1, 3};
-static const casadi_int casadi_s3[5] = {4, 1, 0, 1, 3};
-static const casadi_int casadi_s4[13] = {4, 4, 0, 2, 4, 5, 6, 0, 1, 1, 3, 2, 3};
-static const casadi_int casadi_s5[13] = {4, 4, 0, 1, 3, 4, 6, 0, 0, 1, 2, 1, 3};
-static const casadi_int casadi_s6[8] = {4, 1, 0, 4, 0, 1, 2, 3};
-static const casadi_int casadi_s7[5] = {1, 1, 0, 1, 0};
+static const casadi_int casadi_s0[6] = {4, 1, 0, 2, 2, 3};
+static const casadi_int casadi_s1[4] = {0, 1, 2, 4};
+static const casadi_int casadi_s2[13] = {4, 4, 0, 2, 4, 5, 6, 0, 2, 1, 3, 2, 3};
+static const casadi_int casadi_s3[13] = {4, 4, 0, 1, 2, 4, 6, 0, 1, 0, 2, 1, 3};
+static const casadi_int casadi_s4[8] = {4, 1, 0, 4, 0, 1, 2, 3};
+static const casadi_int casadi_s5[5] = {1, 1, 0, 1, 0};
 
-static const casadi_real casadi_c0[4] = {1., 0., 1., 1.};
+static const casadi_real casadi_c0[4] = {1., 1., 0., 0.};
 
 /* grad_f_X_fcn:(i0[4],i1,i2,i3,i4,i5)->(o0[4x4,6nz]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
@@ -284,55 +265,39 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   casadi_real *rr, *ss;
   const casadi_int *cii;
   const casadi_real *cs;
-  casadi_real *w0=w+4, *w1=w+10, w2, w4, w7, *w8=w+17, *w9=w+21, *w10=w+23, *w11=w+25;
+  casadi_real *w0=w+0, *w1=w+6, w2, w5, w6, *w7=w+13, *w8=w+15, *w9=w+19;
   /* #0: @0 = zeros(4x4,6nz) */
   casadi_clear(w0, 6);
-  /* #1: @1 = [1, 0, 1, 1] */
+  /* #1: @1 = [1, 1, 0, 0] */
   casadi_copy(casadi_c0, 4, w1);
   /* #2: @2 = input[1][0] */
   w2 = arg[1] ? arg[1][0] : 0;
   /* #3: @3 = 00 */
-  /* #4: @4 = 1 */
-  w4 = 1.;
-  /* #5: @5 = 00 */
-  /* #6: @6 = 00 */
+  /* #4: @4 = 00 */
+  /* #5: @5 = 1 */
+  w5 = 1.;
+  /* #6: @6 = 1 */
+  w6 = 1.;
   /* #7: @7 = vertcat(@3, @4, @5, @6) */
-  rr=(&w7);
-  *rr++ = w4;
+  rr=w7;
+  *rr++ = w5;
+  *rr++ = w6;
   /* #8: @7 = (@2*@7) */
-  w7  = (w2*w7);
+  for (i=0, rr=w7, cs=w7; i<2; ++i) (*rr++)  = (w2*(*cs++));
   /* #9: @8 = dense(@7) */
-  casadi_densify((&w7), casadi_s0, w8, 0);
+  casadi_densify(w7, casadi_s0, w8, 0);
   /* #10: @1 = (@1+@8) */
   for (i=0, rr=w1, cs=w8; i<4; ++i) (*rr++) += (*cs++);
-  /* #11: (@0[0, 1, 3, 5] = @1) */
+  /* #11: (@0[0, 1, 2, 4] = @1) */
   for (cii=casadi_s1, rr=w0, ss=w1; cii!=casadi_s1+4; ++cii, ++ss) rr[*cii] = *ss;
-  /* #12: @7 = ones(4x1,1nz) */
-  w7 = 1.;
-  /* #13: @9 = project(@7) */
-  casadi_project((&w7), casadi_s0, w9, casadi_s2, w);
-  /* #14: @3 = 00 */
-  /* #15: @5 = 00 */
-  /* #16: @6 = 00 */
-  /* #17: @7 = 1 */
-  w7 = 1.;
-  /* #18: @4 = vertcat(@3, @5, @6, @7) */
-  rr=(&w4);
-  *rr++ = w7;
-  /* #19: @2 = (@2*@4) */
-  w2 *= w4;
-  /* #20: @10 = project(@2) */
-  casadi_project((&w2), casadi_s3, w10, casadi_s2, w);
-  /* #21: @9 = (@9+@10) */
-  for (i=0, rr=w9, cs=w10; i<2; ++i) (*rr++) += (*cs++);
-  /* #22: @10 = @9[:2] */
-  for (rr=w10, ss=w9+0; ss!=w9+2; ss+=1) *rr++ = *ss;
-  /* #23: (@0[2:6:2] = @10) */
-  for (rr=w0+2, ss=w10; rr!=w0+6; rr+=2) *rr = *ss++;
-  /* #24: @11 = @0' */
-  casadi_trans(w0,casadi_s5, w11, casadi_s4, iw);
-  /* #25: output[0][0] = @11 */
-  casadi_copy(w11, 6, res[0]);
+  /* #12: @7 = ones(2x1) */
+  casadi_fill(w7, 2, 1.);
+  /* #13: (@0[3:7:2] = @7) */
+  for (rr=w0+3, ss=w7; rr!=w0+7; rr+=2) *rr = *ss++;
+  /* #14: @9 = @0' */
+  casadi_trans(w0,casadi_s3, w9, casadi_s2, iw);
+  /* #15: output[0][0] = @9 */
+  casadi_copy(w9, 6, res[0]);
   return 0;
 }
 
@@ -395,19 +360,19 @@ CASADI_SYMBOL_EXPORT const char* grad_f_X_fcn_name_out(casadi_int i) {
 
 CASADI_SYMBOL_EXPORT const casadi_int* grad_f_X_fcn_sparsity_in(casadi_int i) {
   switch (i) {
-    case 0: return casadi_s6;
-    case 1: return casadi_s7;
-    case 2: return casadi_s7;
-    case 3: return casadi_s7;
-    case 4: return casadi_s7;
-    case 5: return casadi_s7;
+    case 0: return casadi_s4;
+    case 1: return casadi_s5;
+    case 2: return casadi_s5;
+    case 3: return casadi_s5;
+    case 4: return casadi_s5;
+    case 5: return casadi_s5;
     default: return 0;
   }
 }
 
 CASADI_SYMBOL_EXPORT const casadi_int* grad_f_X_fcn_sparsity_out(casadi_int i) {
   switch (i) {
-    case 0: return casadi_s4;
+    case 0: return casadi_s2;
     default: return 0;
   }
 }
@@ -416,7 +381,7 @@ CASADI_SYMBOL_EXPORT int grad_f_X_fcn_work(casadi_int *sz_arg, casadi_int* sz_re
   if (sz_arg) *sz_arg = 10;
   if (sz_res) *sz_res = 2;
   if (sz_iw) *sz_iw = 5;
-  if (sz_w) *sz_w = 31;
+  if (sz_w) *sz_w = 25;
   return 0;
 }
 
@@ -424,7 +389,7 @@ CASADI_SYMBOL_EXPORT int grad_f_X_fcn_work_bytes(casadi_int *sz_arg, casadi_int*
   if (sz_arg) *sz_arg = 10*sizeof(const casadi_real*);
   if (sz_res) *sz_res = 2*sizeof(casadi_real*);
   if (sz_iw) *sz_iw = 5*sizeof(casadi_int);
-  if (sz_w) *sz_w = 31*sizeof(casadi_real);
+  if (sz_w) *sz_w = 25*sizeof(casadi_real);
   return 0;
 }
 
@@ -432,18 +397,18 @@ CASADI_SYMBOL_EXPORT int grad_f_X_fcn_work_bytes(casadi_int *sz_arg, casadi_int*
 void mex_grad_f_X_fcn(int resc, mxArray *resv[], int argc, const mxArray *argv[]) {
   casadi_int i;
   int mem;
-  casadi_real w[46];
+  casadi_real w[40];
   casadi_int iw[5];
   const casadi_real* arg[10] = {0};
   casadi_real* res[2] = {0};
   if (argc>6) mexErrMsgIdAndTxt("Casadi:RuntimeError","Evaluation of \"grad_f_X_fcn\" failed. Too many input arguments (%d, max 6)", argc);
   if (resc>1) mexErrMsgIdAndTxt("Casadi:RuntimeError","Evaluation of \"grad_f_X_fcn\" failed. Too many output arguments (%d, max 1)", resc);
-  if (--argc>=0) arg[0] = casadi_from_mex(argv[0], w, casadi_s6, w+15);
-  if (--argc>=0) arg[1] = casadi_from_mex(argv[1], w+4, casadi_s7, w+15);
-  if (--argc>=0) arg[2] = casadi_from_mex(argv[2], w+5, casadi_s7, w+15);
-  if (--argc>=0) arg[3] = casadi_from_mex(argv[3], w+6, casadi_s7, w+15);
-  if (--argc>=0) arg[4] = casadi_from_mex(argv[4], w+7, casadi_s7, w+15);
-  if (--argc>=0) arg[5] = casadi_from_mex(argv[5], w+8, casadi_s7, w+15);
+  if (--argc>=0) arg[0] = casadi_from_mex(argv[0], w, casadi_s4, w+15);
+  if (--argc>=0) arg[1] = casadi_from_mex(argv[1], w+4, casadi_s5, w+15);
+  if (--argc>=0) arg[2] = casadi_from_mex(argv[2], w+5, casadi_s5, w+15);
+  if (--argc>=0) arg[3] = casadi_from_mex(argv[3], w+6, casadi_s5, w+15);
+  if (--argc>=0) arg[4] = casadi_from_mex(argv[4], w+7, casadi_s5, w+15);
+  if (--argc>=0) arg[5] = casadi_from_mex(argv[5], w+8, casadi_s5, w+15);
   --resc;
   res[0] = w+9;
   grad_f_X_fcn_incref();
@@ -452,7 +417,7 @@ void mex_grad_f_X_fcn(int resc, mxArray *resv[], int argc, const mxArray *argv[]
   if (i) mexErrMsgIdAndTxt("Casadi:RuntimeError","Evaluation of \"grad_f_X_fcn\" failed.");
   grad_f_X_fcn_release(mem);
   grad_f_X_fcn_decref();
-  if (res[0]) resv[0] = casadi_to_mex(casadi_s4, res[0]);
+  if (res[0]) resv[0] = casadi_to_mex(casadi_s2, res[0]);
 }
 #endif
 
@@ -462,7 +427,7 @@ casadi_int main_grad_f_X_fcn(casadi_int argc, char* argv[]) {
   const casadi_real* r;
   casadi_int flag;
   casadi_int iw[5];
-  casadi_real w[46];
+  casadi_real w[40];
   const casadi_real* arg[10];
   casadi_real* res[2];
   arg[0] = w+0;

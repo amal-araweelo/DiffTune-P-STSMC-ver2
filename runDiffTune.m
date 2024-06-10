@@ -40,7 +40,7 @@ import casadi.*
 
 %% define the dimensions
 dim_state = 4; % dimension of system state
-dim_control = 1;  % dimension of control inputs
+dim_control = 3;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Video simulation
@@ -102,7 +102,7 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 2;  % Calculate  
+learningRate = 1;  % Calculate  
 maxIterations = 100;
 itr = 0;
 
@@ -188,7 +188,7 @@ while (1)
 
     % Sanity check
     if isnan(gradientUpdate)
-       fprintf('gradient is NAN. Quit.\n');
+       fprintf('gradient is NaN. Quit.\n');
        break;
     end
    

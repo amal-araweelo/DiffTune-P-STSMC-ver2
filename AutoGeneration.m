@@ -7,7 +7,7 @@ import casadi.*;
 
 %% Define the dimensions
 dim_state = 4; % dimension of system state (omega_m, theta_m, omega_r, theta_r)
-dim_control = 1;  % dimension of control inputs (u, theta_r, omega_r)
+dim_control = 3;  % dimension of control inputs (u, theta_r, omega_r)
 dim_controllerParameters = 3;  % dimension of controller parameters (k_1, k_2, k_pos)
 
 %% Load constant physical parameters
@@ -60,8 +60,8 @@ u = MX.sym('u', 1);    % ændret fordi det u vi bruger her er inputtet til syste
 
 %% Define the dynamics (discretized via Forward Euler)
 dynamics = X + dt * [1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l;
-                    omega_m;
                     T_l/J_l - T_Fl/J_l;
+                    omega_m;
                     omega_l]; 
                     
 %% Compute the control action, denoted by h
