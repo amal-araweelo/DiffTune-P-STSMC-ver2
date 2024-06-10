@@ -148,7 +148,8 @@ while (1)
 
         % Compute the sensitivity 
         [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);       
-
+        disp(dx_dtheta)
+        
         % Accumulate the loss
         % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
         loss = loss + (Xref - X(4))^2;

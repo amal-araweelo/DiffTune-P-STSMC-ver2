@@ -38,7 +38,7 @@ dhdtheta = full(dhdtheta);
 % disp(dhdtheta);
 
 % Assemble the Jacobians to compute the sensitivity
-dXdphi = (dfdX + dfdu * dhdX) * dxdtheta_current + dfdu * dhdtheta;
+dXdphi = (dfdX + dfdu * dhdX) * dxdtheta_current + dfdu * dhdtheta
 dudphi = dhdX * dxdtheta_current + dhdtheta;
 
 end
