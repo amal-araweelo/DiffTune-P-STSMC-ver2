@@ -2,11 +2,12 @@
 % evalutaion
 
 clear all;
+clc;
 import casadi.*;
 
 %% Define the dimensions
 dim_state = 4; % dimension of system state (omega_m, theta_m, omega_r, theta_r)
-dim_control = 3;  % dimension of control inputs (u, theta_r, omega_r)
+dim_control = 1;  % dimension of control inputs (u, theta_r, omega_r)
 dim_controllerParameters = 3;  % dimension of controller parameters (k_1, k_2, k_pos)
 
 %% Load constant physical parameters
@@ -14,7 +15,7 @@ dim_controllerParameters = 3;  % dimension of controller parameters (k_1, k_2, k
 dt = MX.sym('dt',1); % (should be set to 1-8 kHz in runDiffTune.m)
 
 % Constant drive train parameters
-N = MX.sym('M',1);              % N: Gearing ratio
+N = MX.sym('N',1);              % N: Gearing ratio
 J_m = MX.sym('J_m', 1);         % J_m: Motor inertia
 J_l = MX.sym('J_l', 1);         % J_l: Load inertia
 % K_s = MX.sym('K_s', 1);         % K_s: Shaft stifness
@@ -32,15 +33,15 @@ T_l = MX.sym('T_l', 1);         % T_l: Load torque
 
 %% casADI-lize all the variables in the computation
 X = MX.sym('X',dim_state);          % system state
-Xref = MX.sym('X_ref', dim_state);  % system reference state
+Xref = MX.sym('Xref', dim_state);  % system reference state
 
 % Elementwise split of the necessary states
 omega_m = X(1);
 omega_l = X(2);
-theta_r = Xref(4);
+% theta_r = Xref(4);
 
 % Load the desired values into a struct
-desired = MX.sym('theta_r', 1);
+theta_r = MX.sym('theta_r', 1);
 theta_r_dot = MX.sym('theta_r_dot', 1);
 theta_r_2dot = MX.sym('theta_r_2dot', 1);
 

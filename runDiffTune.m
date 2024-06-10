@@ -40,7 +40,7 @@ import casadi.*
 
 %% define the dimensions
 dim_state = 4; % dimension of system state
-dim_control = 3;  % dimension of control inputs
+dim_control = 1;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Video simulation
@@ -95,10 +95,9 @@ k2 = 1;
 k_pos = 1;      % ignored when hand-tuning STSMC
 k_vec = [k1; k2; k_pos];
 
-
 %% Define desired trajectory if necessary
-freq = 1;   % 1 rad/s   (mere korrekt hvis 2*pi)
-theta_r = sin(freq * time);   % theta_r is a sine wave with frequency 1 kHz
+freq = 1;   % 1 rad/s
+theta_r = sin(freq * time);   % theta_r is a sine wave with frequency 1 rad/s
 theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = -freq^2 * sin(freq * time);
 
@@ -114,38 +113,39 @@ gradientUpdate = zeros(dim_controllerParameters,1); % define the parameter updat
 
 %% DiffTune iterations
 while (1)
+    fprintf('itr = %d \n', itr);
     itr = itr + 1;
 
     % Initialize state
     X_storage = zeros(dim_state,1);
     
     % Initialize sensitivity
-    dx_dtheta = zeros(dim_state,dim_controllerParameters);
-    du_dtheta = zeros(dim_control,dim_controllerParameters);
+    dx_dtheta = zeros(dim_state, dim_controllerParameters);
+    du_dtheta = zeros(dim_control, dim_controllerParameters);
 
-    % Initialize loss
+    % Initialize loss and gradient of loss
     loss = 0;
+    theta_gradient = zeros(1, dim_controllerParameters);
 
-    % Initialize gradient of loss
-    theta_gradient = zeros(1,dim_controllerParameters);
-
-    % Initialize reference state and desired trajectory
-    Xref_storage = [X_storage(1:3) ; theta_r(1)];
+    % Initialize reference state based on the desired trajectory
+    Xref_storage = [X_storage(1:3); theta_r(1)];
 
     for k = 1 : length(time) - 1
        
         % Load current state and current reference
-        X = X_storage(:,end);
+        X = X_storage(:,end);   % [omega_m; omega_l; theta_m; theta_l]
         Xref = Xref_storage(:,end);
+
+        % Values used in dynamics computations
+        param.T_l = param.K_S*(X(3)/param.N - X(4)) + param.D_S*(X(1)/param.N - X(2));
+        param.T_Fm = X(1)*param.b_fr + sgn_approx(X(1)*10)*param.T_C;
+        param.T_Fl = X(2)*param.b_fr + sgn_approx(X(2)*10)*param.T_C + 0;
  
         % Compute the control action
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
-        
-        % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
-        loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l         
+        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);       
 
         % Accumulating the gradient of loss w/ respect to controller parameters
         % You need to provide dloss_dx and dloss_du here
@@ -163,11 +163,25 @@ while (1)
         % Integrate the reference system to obtain the reference state
         [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_dot(k), param),[time(k) time(k+1)],Xref);
         Xref_storage = [Xref_storage solref(end,:)'];
+        % Xref_storage = [Xref_storage(1:3); theta_r(k)];
         
     end
 
+    % fprintf("theta_gradient = \n");
+    % disp(theta_gradient);
+    % 
+    % fprintf("X = \n");
+    % disp(X);
+    % 
+    % fprintf("Xref = \n");
+    % disp(Xref);
+
     % Clear global variable
     clear v;
+
+    % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
+    % loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l  
+    loss = trace([X_storage(:,1:end)-Xref_storage(:,1:end)]'*diag([1 0 0 0]) * [X_storage(:,1:end)-Xref_storage(:,1:end)]);
 
     % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
@@ -177,7 +191,7 @@ while (1)
     rmse_hist = [rmse_hist RMSE];
 
     % Update the gradient
-    gradientUpdate = - learningRate * theta_gradient;
+    gradientUpdate = -learningRate * theta_gradient;
 
     % Sanity check
     if isnan(gradientUpdate)
@@ -192,56 +206,98 @@ while (1)
     % the feasible set of parameters in this case is greater than 0.1
     % (taken from template)
     % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.1)
-       neg_indicator = (k_vec < 0.1);
+    if any(k_vec < 0.5)
+       neg_indicator = (k_vec < 0.5);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
+       k_vec_default = 0.5 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
 
-    % Store the parameters
+    % store the parameters
     param_hist = [param_hist k_vec];
+    
+    % subplot(1,3,[1 2]);
+    % plot(time,Xref_storage(4,:),'DisplayName','theta\_r');
+    % hold on;
+    % plot(time,X_storage(4,:),'DisplayName','theta\_l');
+    % 
+    % axis equal
+    % xlabel('time [s]');
+    % ylabel('theta [rad]');
+    % legend;
+    % 
+    % % rmse
+    % subplot(1,3,3);
+    % plot(rmse_hist,'LineWidth',1.5);
+    % hold on;
+    % grid on;
+    % stem(length(rmse_hist),rmse_hist(end),'Color',[0 0.4470 0.7410]);
+    % 
+    % xlim([0 100]);
+    % ylim([0 rmse_hist(1)*1.1]);
+    % text(50,0.3,['iteration = ' num2str(length(rmse_hist))],'FontSize',12);
+    % xlabel('iterations');
+    % ylabel('RMSE [m]');
+    % set(gca,'FontSize',10);
+    % plotedit(gca,'on');
+    % plotedit(gca,'off');
+    % 
+    % set(gcf,'Position',[172 120 950 455]);
+    % 
+    % drawnow;
+    % 
+    % % visualization for movie
+    % if param.generateVideo
+    %     frame = getframe(gcf);
+    %     writeVideo(video_obj,frame);
+    %     clf
+    % end
 
-    % Plotting
-    set(gcf,'Position',[172 120 950 455]);
-    set(gcf,'color','w');
 
-    % Position (theta_l) tracking
-    subplot(3,3,[1,2]);
-    plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
-    hold on;
-    plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
-    xlabel('time [s]');
-    ylabel('\theta_l [rad]');
-    grid on;
-    h_lgd = legend;
-    set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
-    set(gca,'FontSize',10);
 
-    % RMSE
-    subplot(3,3,[3;6;9]);
-    plot(rmse_hist,'LineWidth',1.5);
-    hold on;
-    grid on;
-    stem(length(rmse_hist),rmse_hist(end),'Color',[0 0.4470 0.7410]);
-
-    xlim([0 100]);
-    ylim([0 rmse_hist(1)*1.1]);
-    text(50,0.3,['iteration = ' num2str(length(rmse_hist))],'FontSize',12);
-    xlabel('iterations');
-    ylabel('RMSE [rad]');
-    set(gca,'FontSize',10);
-    plotedit(gca,'on');
-    plotedit(gca,'off');
-
-    drawnow;
-
-    % Visualization for movie
-    if param.generateVideo
-        frame = getframe(gcf);
-        writeVideo(video_obj,frame);
-        clf
-    end
+    % % Store the parameters
+    % param_hist = [param_hist k_vec];
+    % 
+    % % Plotting
+    % set(gcf,'Position',[172 120 950 455]);
+    % set(gcf,'color','w');
+    % 
+    % % Position (theta_l) tracking
+    % subplot(3,3,[1,2]);
+    % plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
+    % hold on;
+    % plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
+    % xlabel('time [s]');
+    % ylabel('\theta_l [rad]');
+    % grid on;
+    % h_lgd = legend;
+    % set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
+    % set(gca,'FontSize',10);
+    % 
+    % % RMSE
+    % subplot(3,3,[3;6;9]);
+    % plot(rmse_hist,'LineWidth',1.5);
+    % hold on;
+    % grid on;
+    % stem(length(rmse_hist),rmse_hist(end),'Color',[0 0.4470 0.7410]);
+    % 
+    % xlim([0 100]);
+    % ylim([0 rmse_hist(1)*1.1]);
+    % text(50,0.3,['iteration = ' num2str(length(rmse_hist))],'FontSize',12);
+    % xlabel('iterations');
+    % ylabel('RMSE [rad]');
+    % set(gca,'FontSize',10);
+    % plotedit(gca,'on');
+    % plotedit(gca,'off');
+    % 
+    % drawnow;
+    % 
+    % % Visualization for movie
+    % if param.generateVideo
+    %     frame = getframe(gcf);
+    %     writeVideo(video_obj,frame);
+    %     clf
+    % end
 
     % Terminate if the total number of iterations is more than maxIterations
     if itr >= maxIterations
@@ -254,12 +310,12 @@ if param.generateVideo
 end
 
 %% Plot trajectory
-figure;
-plot(time, Xref_storage(4,:),'DisplayName','theta_r');
-hold on;
-plot(time, X_storage(4,:),'DisplayName','theta_l');
-legend;
-ylabel('\theta [rad]');
+% figure();
+% plot(time, Xref_storage(4,:),'DisplayName','theta_r');
+% hold on;
+% plot(time, X_storage(4,:),'DisplayName','theta_l');
+% legend;
+% ylabel('\theta [rad]');
 
 %% Debug session
 % check_dx_dtheta = sum(isnan(dx_dtheta),'all');
