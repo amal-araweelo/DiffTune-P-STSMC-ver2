@@ -113,11 +113,11 @@ gradientUpdate = zeros(dim_controllerParameters,1); % define the parameter updat
 
 %% DiffTune iterations
 while (1)
-    fprintf('itr = %d \n', itr);
     itr = itr + 1;
+    fprintf('itr = %d \n', itr);
 
     % Initialize state
-    X_storage = zeros(dim_state,1);
+    X_storage = zeros(dim_state, 1);
     
     % Initialize sensitivity
     dx_dtheta = zeros(dim_state, dim_controllerParameters);
@@ -129,6 +129,8 @@ while (1)
 
     % Initialize reference state based on the desired trajectory
     Xref_storage = [X_storage(1:3); theta_r(1)];
+    % Xref_storage = zeros(dim_state, 1);
+    % Xref_storage(4, 1) = theta_r(1);
 
     for k = 1 : length(time) - 1
        
@@ -137,9 +139,9 @@ while (1)
         Xref = Xref_storage(:,end);
 
         % Values used in dynamics calculations
-        param.T_l = param.K_S*(X(3)/param.N - X(4)) + param.D_S*(X(1)/param.N - X(2));
-        param.T_Fm = X(1)*param.b_fr + sgn_approx(X(1)*10)*param.T_C;
-        param.T_Fl = X(2)*param.b_fr + sgn_approx(X(1)*10)*param.T_C + 0;
+        param.T_l = param.K_S * (X(3) / param.N - X(4)) + param.D_S * (X(1) / param.N - X(2));
+        param.T_Fm = X(1) * param.b_fr + sgn_approx(X(1) * 10) * param.T_C;
+        param.T_Fl = X(2) * param.b_fr + sgn_approx(X(2) * 10) * param.T_C + 0;
  
         % Compute the control action
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
@@ -154,7 +156,7 @@ while (1)
         % We then have:
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
-        theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref(4)] * dx_dtheta;
+        theta_gradient = theta_gradient + 2 * [0 0 0 (X(4) - Xref(4))] * dx_dtheta;
 
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
@@ -163,7 +165,7 @@ while (1)
         % Integrate the reference system to obtain the reference state
         % [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_2dot(k), param),[time(k) time(k+1)],Xref);
         % Xref_storage = [Xref_storage solref(end,:)'];
-        Xref_storage = [Xref_storage [0;0;0;theta_r(k)]];
+        Xref_storage = [Xref_storage [0; 0; 0; theta_r(k)]];
         
     end
 
@@ -171,8 +173,11 @@ while (1)
     clear v;
 
     % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
+    % loss = loss + norm(Xref_storage(4) - X_storage(4))^2;
     % loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l
-    % loss = trace([X_storage(:,1:end)-Xref_storage(:,1:end)]'*diag([1 0 0 0]) * [X_storage(:,1:end)-Xref_storage(:,1:end)]);
+    % loss = trace([X_storage(:,1:end)-Xref_storage(:,1:end)]'*diag([0 0 0 1]) * [X_storage(:,1:end)-Xref_storage(:,1:end)]);
+    loss = trace((X_storage(4,:) - Xref_storage(4,:))' * (X_storage(4,:) - Xref_storage(4,:)));
+    % loss = (Xref_storage(4) - X_storage(4))^2;  % error_theta = theta_r - theta_l
 
     % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
@@ -197,10 +202,10 @@ while (1)
     % the feasible set of parameters in this case is greater than 0.1
     % (taken from template)
     % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.5)
-       neg_indicator = (k_vec < 0.5);
+    if any(k_vec < 0.1)
+       neg_indicator = (k_vec < 0.1);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.5 * ones(dim_controllerParameters,1);
+       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
 
@@ -264,6 +269,7 @@ plot(time, Xref_storage(4,:),'DisplayName','theta_r');
 hold on;
 plot(time, X_storage(4,:),'DisplayName','theta_l');
 legend;
+xlabel('time [s]');
 ylabel('\theta [rad]');
 
 %% Debug session
