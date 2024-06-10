@@ -7,8 +7,6 @@ dXdt = zeros(4, 1); % where (4, 1) comes from (dim_state, dim_control)
 
 omega_m = X(1);
 omega_l = X(2);
-% theta_m = X(3);
-% theta_l = X(4);
 
 N = param.N;
 J_m = param.J_m;

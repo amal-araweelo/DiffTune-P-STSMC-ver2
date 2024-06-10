@@ -33,15 +33,13 @@ T_l = MX.sym('T_l', 1);         % T_l: Load torque
 
 %% casADI-lize all the variables in the computation
 X = MX.sym('X', dim_state);        % system state
-Xref = MX.sym('Xref', dim_state);  % system reference state
+Xref = MX.sym('Xref', 1);  % system reference state
 
 % Elementwise split of the necessary states
 omega_m = X(1);
 omega_l = X(2);
-% theta_r = Xref(4);
 
-% Load the desired values into a struct
-theta_r = MX.sym('theta_r', 1);
+% Desired values
 theta_r_dot = MX.sym('theta_r_dot', 1);
 theta_r_2dot = MX.sym('theta_r_2dot', 1);
 
@@ -60,8 +58,8 @@ u = MX.sym('u', 1);    % ændret fordi det u vi bruger her er inputtet til syste
 
 %% Define the dynamics (discretized via Forward Euler)
 dynamics = X + dt * [1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l;
-                    omega_m;
                     T_l/J_l - T_Fl/J_l;
+                    omega_m;
                     omega_l]; 
                     
 %% Compute the control action, denoted by h

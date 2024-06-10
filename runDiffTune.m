@@ -166,15 +166,6 @@ while (1)
         
     end
 
-    fprintf('dx_dtheta = \n');
-    disp(dx_dtheta);
-
-    fprintf('loss = \n');
-    disp(loss);
-
-    fprintf('theta_gradient = \n');
-    disp(theta_gradient);
-
     % Clear global variable
     clear v;
 
@@ -229,7 +220,7 @@ while (1)
     subplot(3,3,[1,2;4,5]);
     plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
     hold on;
-    plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
+    plot(time,theta_r,'DisplayName','desired','LineWidth',1.5);
     xlabel('time [s]');
     ylabel('\theta_l [rad]');
     grid on;
@@ -274,7 +265,7 @@ end
 
 %% Plot trajectory
 figure();
-plot(time, Xref_storage(4,:),'DisplayName','theta_r');
+plot(time, theta_r,'DisplayName','theta_r');
 hold on;
 plot(time, X_storage(4,:),'DisplayName','theta_l');
 legend;
