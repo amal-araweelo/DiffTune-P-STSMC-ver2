@@ -38,14 +38,14 @@ omega_r_dot = k_pos * (theta_r_dot - omega_l) + N * theta_r_2dot;
 
 % STSMC controller
 s = omega_m - omega_r; % Error
-v_dot = -k2 * sgn_approx(100*s);
+v_dot = - k2 * sgn_approx(100*s);
 
 if (isempty(v)) % initialise v to zero in first iteration
     v = 0;
 end
 v = v + v_dot * dt;
 
-u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + v;
+u_smc = - k1 * sqrt(abs(s)) * sgn_approx(s) + v;
 % fprintf('omega_r_dot = %d \n', omega_r_dot);
 u = u_smc + J_m * omega_r_dot;
 % fprintf('u = %d \n', u);
