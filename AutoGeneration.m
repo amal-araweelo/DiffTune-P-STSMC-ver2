@@ -33,7 +33,7 @@ T_l = MX.sym('T_l', 1);         % T_l: Load torque
 
 %% casADI-lize all the variables in the computation
 X = MX.sym('X', dim_state);        % system state
-Xref = MX.sym('Xref', dim_state);  % system reference state
+Xref = MX.sym('Xref', 1);  % system reference state
 
 % Elementwise split of the necessary states
 omega_m = X(1);

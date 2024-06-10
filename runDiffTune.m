@@ -128,7 +128,7 @@ while (1)
     theta_gradient = zeros(1, dim_controllerParameters);
 
     % Initialize reference state based on the desired trajectory
-    Xref_storage = [X_storage(1:3); theta_r(1)];
+    % Xref_storage = [X_storage(1:3); theta_r(1)];
     % Xref_storage = zeros(dim_state, 1);
     % Xref_storage(4, 1) = theta_r(1);
 
@@ -136,7 +136,7 @@ while (1)
        
         % Load current state and current reference
         X = X_storage(:,end);   % X = [omega_m; omega_l; theta_m; theta_l]
-        Xref = Xref_storage(:,end);
+        Xref = theta_r(k);
 
         % Values used in dynamics calculations
         param.T_l = param.K_S * (X(3) / param.N - X(4)) + param.D_S * (X(1) / param.N - X(2));
@@ -151,7 +151,7 @@ while (1)
 
         % Accumulate the loss
         % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
-        loss = loss + (Xref(4) - X(4))^2;
+        loss = loss + (Xref - X(4))^2;
 
         % Accumulating the gradient of loss w/ respect to controller parameters
         % You need to provide dloss_dx and dloss_du here
@@ -160,7 +160,7 @@ while (1)
         % We then have:
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
-        theta_gradient = theta_gradient + 2 * [0 0 0 (X(4) - Xref(4))] * dx_dtheta;
+        theta_gradient = theta_gradient + 2 * [0 0 0 (X(4) - Xref)] * dx_dtheta;
 
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
@@ -169,7 +169,7 @@ while (1)
         % Integrate the reference system to obtain the reference state
         % [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_2dot(k), param),[time(k) time(k+1)],Xref);
         % Xref_storage = [Xref_storage solref(end,:)'];
-        Xref_storage = [Xref_storage [0; 0; 0; theta_r(k)]];
+        % Xref_storage = [Xref_storage [0; 0; 0; theta_r(k)]];
         
     end
 
@@ -217,7 +217,8 @@ while (1)
     subplot(3,3,[1,2;4,5]);
     plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
     hold on;
-    plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
+    % plot(time,Xref_storage(4,:),':','DisplayName','desired','LineWidth',1.5);
+    plot(time,theta_r,':','DisplayName','desired','LineWidth',1.5);
     xlabel('time [s]');
     ylabel('\theta_l [rad]');
     grid on;
@@ -262,7 +263,7 @@ end
 
 %% Plot trajectory
 figure();
-plot(time, Xref_storage(4,:),'DisplayName','theta_r');
+plot(time, theta_r,'DisplayName','theta_r');
 hold on;
 plot(time, X_storage(4,:),'DisplayName','theta_l');
 legend;
