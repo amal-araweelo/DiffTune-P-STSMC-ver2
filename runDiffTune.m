@@ -117,7 +117,6 @@ while (1)
     itr = itr + 1;
     fprintf('------------------------\n');
     fprintf('itr = %d \n', itr);
-    itr = itr + 1;
 
     % Initialize state
     X_storage = zeros(dim_state,1);
@@ -163,11 +162,6 @@ while (1)
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
         X_storage = [X_storage sold(end,:)'];   % store the new state
-
-        % Integrate the reference system to obtain the reference state
-        % [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_2dot(k), param),[time(k) time(k+1)],Xref);
-        % Xref_storage = [Xref_storage solref(end,:)'];
-        Xref_storage = [Xref_storage theta_r(k)];
         
     end
 
@@ -218,7 +212,7 @@ while (1)
     param_hist = [param_hist k_vec];
 
     % Plotting
-    % set(gcf,'Position',[172 120 950 455]);
+    set(gcf,'Position',[172 120 950 455]);
     set(gcf,'color','w');
 
     % Position (theta_l) tracking
