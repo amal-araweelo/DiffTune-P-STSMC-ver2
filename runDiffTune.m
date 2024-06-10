@@ -40,7 +40,7 @@ import casadi.*
 
 %% define the dimensions
 dim_state = 4; % dimension of system state
-dim_control = 3;  % dimension of control inputs
+dim_control = 1;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Video simulation
@@ -133,8 +133,13 @@ while (1)
     for k = 1 : length(time) - 1
        
         % Load current state and current reference
-        X = X_storage(:,end);
+        X = X_storage(:,end);   % [omega_m; omega_l; theta_m; theta_l]
         Xref = Xref_storage(:,end);
+
+        % Values used in dynamics computations
+        param.T_l = param.K_S*(X(3)/param.N - X(4)) + param.D_S*(X(1)/param.N - X(2));
+        param.T_Fm = X(1)*param.b_fr + sgn_approx(X(1)*10)*param.T_C;
+        param.T_Fl = X(2)*param.b_fr + sgn_approx(X(2)*10)*param.T_C + 0;
  
         % Compute the control action
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
