@@ -134,7 +134,11 @@ while (1)
        
         % Load current state and current reference
         X = X_storage(:,end);   % X = [omega_m; omega_l; theta_m; theta_l]
+<<<<<<< Updated upstream
         Xref = theta_r(k);
+=======
+        Xref = Xref_storage;
+>>>>>>> Stashed changes
 
         % Values used in dynamics calculations
         param.T_l = param.K_S * (X(3) / param.N - X(4)) + param.D_S * (X(1) / param.N - X(2));
@@ -163,6 +167,14 @@ while (1)
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
         X_storage = [X_storage sold(end,:)'];   % store the new state
+<<<<<<< Updated upstream
+=======
+
+        % Integrate the reference system to obtain the reference state
+        % [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_2dot(k), param),[time(k) time(k+1)],Xref);
+        % Xref_storage = [Xref_storage solref(end,:)'];
+        Xref_storage = [Xref_storage theta_r(k)];
+>>>>>>> Stashed changes
         
     end
 
