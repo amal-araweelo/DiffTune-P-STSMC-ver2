@@ -2,3 +2,7 @@
 mex/
 *.mp4
 *.mexw64
+mex/grad_f_u_fcn.mexw64
+mex/grad_f_X_fcn.mexw64
+mex/grad_h_theta_fcn.mexw64
+mex/grad_h_X_fcn.mexw64
