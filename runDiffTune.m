@@ -102,7 +102,7 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 2;  % Calculate  
+learningRate = 1;  % Calculate  
 maxIterations = 100;
 itr = 0;
 
@@ -129,25 +129,26 @@ while (1)
     loss = 0;
     theta_gradient = zeros(1, dim_controllerParameters);
 
-    % Initialize reference state based on the desired trajectory
-    Xref_storage = [X_storage(1:3); theta_r(1)];
-
     for k = 1 : length(time) - 1
        
         % Load current state and current reference
         X = X_storage(:,end);   % X = [omega_m; omega_l; theta_m; theta_l]
-        Xref = Xref_storage(:,end);
+        Xref = theta_r(k);
 
         % Values used in dynamics calculations
-        param.T_l = param.K_S*(X(3)/param.N - X(4)) + param.D_S*(X(1)/param.N - X(2));
-        param.T_Fm = X(1)*param.b_fr + sgn_approx(X(1)*10)*param.T_C;
-        param.T_Fl = X(2)*param.b_fr + sgn_approx(X(1)*10)*param.T_C + 0;
+        param.T_l = param.K_S * (X(3) / param.N - X(4)) + param.D_S * (X(1) / param.N - X(2));
+        param.T_Fm = X(1) * param.b_fr + sgn_approx(X(1) * 10) * param.T_C;
+        param.T_Fl = X(2) * param.b_fr + sgn_approx(X(2) * 10) * param.T_C + 0;
  
         % Compute the control action
         u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param.J_m, param.N, dt); 
 
         % Compute the sensitivity 
         [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
+
+        % Accumulate the loss
+        % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
+        loss = loss + (Xref - X(4))^2;
 
         % Accumulating the gradient of loss w/ respect to controller parameters
         % You need to provide dloss_dx and dloss_du here
@@ -161,11 +162,6 @@ while (1)
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
         X_storage = [X_storage sold(end,:)'];   % store the new state
-
-        % Integrate the reference system to obtain the reference state
-        % [~,solref] = ode45(@(t,X) dynamics(t, X, theta_r_2dot(k), param),[time(k) time(k+1)],Xref);
-        % Xref_storage = [Xref_storage solref(end,:)'];
-        Xref_storage = [Xref_storage [0;0;0;theta_r(k)]];
         
     end
 
