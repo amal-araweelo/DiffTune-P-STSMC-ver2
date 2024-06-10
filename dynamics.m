@@ -13,10 +13,14 @@ theta_l = X(4);
 N = param.N;
 J_m = param.J_m;
 J_l = param.J_l;
+K_S = param.K_S;
+D_S = param.D_S;
+b_fr = param.b_fr;
+T_C = param.T_C;
 
-T_l = param.K_S*(theta_m/param.N - theta_l) + param.D_S*(omega_m/N - omega_l);
-T_Fm = omega_m*param.b_fr + sgn_approx(omega_m*10)*param.T_C;
-T_Fl = omega_l*param.b_fr + sgn_approx(omega_l*10)*param.T_C + 0;
+T_l = K_S*(theta_m/N - theta_l) + D_S*(omega_m/N - omega_l);
+T_Fm = omega_m*b_fr + sgn_approx(omega_m*10)*T_C;
+T_Fl = omega_l*b_fr + sgn_approx(omega_l*10)*T_C + 0;
 
 dXdt(1) = 1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l; % omega_m_dot
 dXdt(2) = omega_m;                              % theta_m_dot
