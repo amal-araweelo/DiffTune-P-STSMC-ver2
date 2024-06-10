@@ -117,7 +117,6 @@ while (1)
     itr = itr + 1;
     fprintf('------------------------\n');
     fprintf('itr = %d \n', itr);
-    itr = itr + 1;
 
     % Initialize state
     X_storage = zeros(dim_state,1);
