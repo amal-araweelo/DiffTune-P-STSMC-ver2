@@ -17,25 +17,25 @@
 function [dXdphi,dudphi] = sensitivityComputation(dxdtheta_current, X, Xref, theta_r_dot, theta_r_2dot, u, param, k_vec, dt)
 
 % Evaluate the Jacobians
-dfdX = grad_f_X_fcn(X, dt, u, param.J_m, param.N, param.J_l);
+dfdX = grad_f_X_fcn(X, dt, u, param);
 dfdX = full(dfdX);    % full() converts sparse matrix to full matrix
 
 % fprintf('dfdX = \n');
 % disp(dfdX);
 
-dfdu = grad_f_u_fcn(X, dt, u, param.J_m, param.N, param.J_l);
+dfdu = grad_f_u_fcn(X, dt, u, param);
 dfdu = full(dfdu);
 
 % fprintf('dfdu = \n');
 % disp(dfdu);
 
-dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param.J_m, param.N, dt);
+dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param, dt);
 dhdX = full(dhdX);
 
 % fprintf('dhdX = \n');
 % disp(dhdX);
 
-dhdtheta = grad_h_theta_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param.J_m, param.N, dt);
+dhdtheta = grad_h_theta_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param, dt);
 dhdtheta = full(dhdtheta);
 
 % fprintf('dhdtheta = \n');

@@ -16,7 +16,7 @@
 
 % ud: containing motor/load angular velocity/position (4outputs)
 
-function ud = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt) % t for time
+function ud = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param, dt)
 global v;
 
 % Controller gains
@@ -30,6 +30,9 @@ omega_l = X(2);
 theta_l = X(4);
 theta_r = Xref;
 
+% Parameters (param = [N J_m J_l K_S D_S T_C T_S b_fr])
+N = param(1);
+J_m = param(2);
 
 % P-controller
 omega_r = k_pos * (theta_r - theta_l) + N * theta_r_dot;
@@ -47,8 +50,7 @@ v = v + v_dot * dt;
 u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + v;
 u = u_smc + J_m * omega_r_dot;
 
-
 % Output
 ud = u;
-% fprintf('ud = %d \n', ud);
+
 end 
