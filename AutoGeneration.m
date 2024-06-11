@@ -22,7 +22,7 @@ J_l = MX.sym('J_l', 1);         % J_l: Load inertia
 K_S = MX.sym('K_S', 1);         % K_s: Shaft stifness
 D_S = MX.sym('D_S', 1);         % D_s: Shaft damping coefficinet
 T_C = MX.sym('T_C', 1);       % T_Cm: Motor Coulomb friction
-T_S = MX.sym('T_S', 1);       % T_Sm: Motor static friction coefficient
+% T_S = MX.sym('T_S', 1);       % T_Sm: Motor static friction coefficient
 b_fr = MX.sym('b_fr', 1);   % beta_m: Motor viscous friction coefficient
 
 % Disturbances
@@ -30,7 +30,7 @@ b_fr = MX.sym('b_fr', 1);   % beta_m: Motor viscous friction coefficient
 % T_Fl = MX.sym('T_Fl', 1);       % T_Fl: Load friction
 % T_l = MX.sym('T_l', 1);         % T_l: Load torque
 
-param = [N J_m J_l K_S D_S T_C T_S b_fr];
+param = [N J_m J_l K_S D_S T_C b_fr];
 
 %% casADI-lize all the variables in the computation
 X = MX.sym('X', dim_state);        % system state
@@ -71,8 +71,8 @@ grad_h_theta = jacobian(h,k_vec);
 %% Function-lize the generated jacobians
 
 % inputs_f denotes the input arguments to the dynamics
-grad_f_X_fcn = Function('grad_f_X_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_C, T_S, b_fr},{grad_f_X});
-grad_f_u_fcn = Function('grad_f_u_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_C, T_S, b_fr},{grad_f_u});
+grad_f_X_fcn = Function('grad_f_X_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_C, b_fr},{grad_f_X});
+grad_f_u_fcn = Function('grad_f_u_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_C, b_fr},{grad_f_u});
 
 % inputs_h denote the input arguments to the controller
 grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_X});

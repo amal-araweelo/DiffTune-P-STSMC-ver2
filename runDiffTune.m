@@ -45,8 +45,8 @@ dim_control = 1;  % dimension of control inputs
 dim_controllerParameters = 3;  % dimension of controller parameters
 
 %% Video simulation
-param.generateVideo = true;
-if param.generateVideo
+param1.generateVideo = true;
+if param1.generateVideo
     video_obj = VideoWriter('DriveTrain.mp4','MPEG-4');
     video_obj.FrameRate = 15;
     open(video_obj);
@@ -71,12 +71,12 @@ D_S = 0.0548;   % N m s rad^(-1)
 T_C = (0.0223 + 0.0232) / 2;    % N m
 % Static friction
 % (assuming T_S is the average of T_S_m and T_S_l)
-T_S = (0.0441 + 0.0453) / 2;    % N m
+% T_S = (0.0441 + 0.0453) / 2;    % N m
 % Friction constants
 b_fr = 0.0016;  % N m s rad^(-1)
 J_l = 1; % kgm^2 -- Moment of inertia
 
-param = [N J_m J_l K_S D_S T_C T_S b_fr];
+param = [N J_m J_l K_S D_S T_C b_fr];
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
@@ -92,7 +92,7 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 2;  % Calculate  
+learningRate = 0.1;  % Calculate  
 maxIterations = 100;
 itr = 0;
 
@@ -191,10 +191,10 @@ while (1)
     % the feasible set of parameters in this case is greater than 0.1
     % (taken from template)
     % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.5)
-       neg_indicator = (k_vec < 0.5);
+    if any(k_vec < 0.1)
+       neg_indicator = (k_vec < 0.1);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.5 * ones(dim_controllerParameters,1);
+       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
 
@@ -239,7 +239,7 @@ while (1)
     drawnow;
 
     % Visualization for movie
-    if param.generateVideo
+    if param1.generateVideo
         frame = getframe(gcf);
         writeVideo(video_obj,frame);
         clf
@@ -251,7 +251,7 @@ while (1)
     end
 end
 
-if param.generateVideo
+if param1.generateVideo
     close(video_obj);
 end
 

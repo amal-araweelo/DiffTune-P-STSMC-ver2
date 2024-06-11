@@ -30,7 +30,7 @@ omega_l = X(2);
 theta_l = X(4);
 theta_r = Xref;
 
-% Parameters (param = [N J_m J_l K_S D_S T_C T_S b_fr])
+% Parameters (param = [N J_m J_l K_S D_S T_C b_fr])
 N = param(1);
 J_m = param(2);
 
