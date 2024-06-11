@@ -30,7 +30,6 @@ omega_l = X(2);
 theta_l = X(4);
 theta_r = Xref;
 
-% Controllers
 
 % P-controller
 omega_r = k_pos * (theta_r - theta_l) + N * theta_r_dot;
@@ -45,10 +44,9 @@ if (isempty(v)) % initialise v to zero in first iteration
 end
 v = v + v_dot * dt;
 
-u_smc = - k1 * sqrt(abs(s)) * sgn_approx(s) + v;
-% fprintf('omega_r_dot = %d \n', omega_r_dot);
+u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + v;
 u = u_smc + J_m * omega_r_dot;
-% fprintf('u = %d \n', u);
+
 
 % Output
 ud = u;
