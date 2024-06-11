@@ -37,6 +37,7 @@ clc;
 
 addpath('mex\');
 addpath('Common\');
+addpath('MP4\');
 import casadi.*
 
 %% define the dimensions
@@ -47,7 +48,7 @@ dim_controllerParameters = 3;  % dimension of controller parameters
 %% Video simulation
 param1.generateVideo = true;
 if param1.generateVideo
-    video_obj = VideoWriter('DriveTrain.mp4','MPEG-4');
+    video_obj = VideoWriter('MP4\DriveTrain.mp4','MPEG-4');
     video_obj.FrameRate = 15;
     open(video_obj);
 end
@@ -92,7 +93,7 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 1;  % Calculate  
+learningRate = 0.005;  % Calculate       0.5 kunne ikke finde bedre løsning, 0.05 så rammer den k_vec = 0.1 for alle
 maxIterations = 100;
 itr = 0;
 
@@ -145,11 +146,11 @@ while (1)
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4)-Xref] * dx_dtheta;
-        fprintf('X(4)-Xref = ');
-        disp(X(4)-Xref);
+        % fprintf('X(4)-Xref = ');
+        % disp(X(4)-Xref);
 
         % Integrate the ode dynamics
-        [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
+        [~,sold] = ode45(@(t,X)dynamics(t, X, u, param'),[time(k) time(k+1)], X);
         X_storage = [X_storage sold(end,:)'];   % store the new state
         
     end
@@ -196,10 +197,10 @@ while (1)
     % the feasible set of parameters in this case is greater than 0.1
     % (taken from template)
     % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.1)
-       neg_indicator = (k_vec < 0.1);
+    if any(k_vec < 0.01)
+       neg_indicator = (k_vec < 0.01);
        pos_indicator = ~neg_indicator;
-       k_vec_default = 0.1 * ones(dim_controllerParameters,1);
+       k_vec_default = 0.01 * ones(dim_controllerParameters,1);
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
 
@@ -261,12 +262,13 @@ if param1.generateVideo
 end
 
 %% Plot trajectory
-figure();
+h = figure(2);
 plot(time, theta_r,'DisplayName','theta_r');
 hold on;
 plot(time, X_storage(4,:),'DisplayName','theta_l');
 legend;
 ylabel('\theta [rad]');
+saveas(h, 'MP4\sine resp.png');
 
 %% Debug session
 % check_dx_dtheta = sum(isnan(dx_dtheta),'all');
