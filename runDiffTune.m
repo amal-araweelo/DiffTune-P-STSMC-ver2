@@ -80,9 +80,9 @@ param = [N J_m J_l K_S D_S T_C b_fr];
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
-k1 = 1;
-k2 = 1;
-k_pos = 1;      % ignored when hand-tuning STSMC
+k1 = 10;
+k2 = 10;
+k_pos = 10;      % ignored when hand-tuning STSMC
 k_vec = [k1; k2; k_pos];
 
 %% Define desired trajectory if necessary
@@ -92,7 +92,7 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 0.1;  % Calculate  
+learningRate = 1;  % Calculate  
 maxIterations = 100;
 itr = 0;
 
@@ -106,6 +106,9 @@ while (1)
     itr = itr + 1;
     fprintf('------------------------\n');
     fprintf('itr = %d \n', itr);
+
+    % fprintf('k_vec = \n');
+    % disp(k_vec);
 
     % Initialize state
     X_storage = zeros(dim_state,1);
@@ -142,6 +145,8 @@ while (1)
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4)-Xref] * dx_dtheta;
+        fprintf('X(4)-Xref = ');
+        disp(X(4)-Xref);
 
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
@@ -152,14 +157,14 @@ while (1)
     fprintf('dx_dtheta = \n');
     disp(dx_dtheta);
 
-    fprintf('loss = \n');
-    disp(loss);
+    % fprintf('loss = \n');
+    % disp(loss);
 
     fprintf('theta_gradient = \n');
     disp(theta_gradient);
 
     % Clear global variable
-    clear v;
+    clear global v;
 
     % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
     % loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l
@@ -183,7 +188,7 @@ while (1)
        fprintf('gradient is NAN. Quit.\n');
        break;
     end
-   
+
     % Gradient descent
     k_vec = k_vec + gradientUpdate';    % ' used for transposing matrix or vector
 
@@ -198,7 +203,7 @@ while (1)
        k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
     end
 
-    fprintf('k_vec = \n');
+    fprintf('k_vec_updated = \n');
     disp(k_vec);
 
     % store the parameters
