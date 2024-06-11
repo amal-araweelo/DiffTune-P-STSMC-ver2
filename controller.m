@@ -16,7 +16,7 @@
 
 % ud: containing motor/load angular velocity/position (4outputs)
 
-function ud = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt) % t for time
+function ud = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param, dt) % t for time
 global v;
 
 % Controller gains

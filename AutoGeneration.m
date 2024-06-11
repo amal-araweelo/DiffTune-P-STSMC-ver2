@@ -12,7 +12,8 @@ dim_controllerParameters = 3;  % dimension of controller parameters (k_1, k_2, k
 
 %% Load constant physical parameters
 % Sampling time
-dt = MX.sym('dt',1); % (should be set to 1-8 kHz in runDiffTune.m)
+dt = MX.sym('dt', 1); % (should be set to 1-8 kHz in runDiffTune.m)
+t = MX.sym('t', 1);
 
 % Constant drive train parameters
 N = MX.sym('N',1);              % N: Gearing ratio
@@ -57,13 +58,10 @@ k_pos = k_vec(3);
 u = MX.sym('u', 1);    % ændret fordi det u vi bruger her er inputtet til systemet u og er 1 dimensionelt.
 
 %% Define the dynamics (discretized via Forward Euler)
-dynamics = X + dt * [1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l;
-                    T_l/J_l - T_Fl/J_l;
-                    omega_m;
-                    omega_l]; 
+dynamics = X + dt * dynamics(t, X, u, param);
                     
 %% Compute the control action, denoted by h
-h = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt); % Xref(4) = theta_r is the desired trajectory
+h = controller(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param, dt); % Xref(4) = theta_r is the desired trajectory
 
 %% Generate jacobians
 grad_f_X = jacobian(dynamics,X);
