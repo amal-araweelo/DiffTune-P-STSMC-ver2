@@ -5,11 +5,8 @@
 function dXdt = dynamics(t, X, u, param)
 % dXdt = zeros(4, 1); % where (4, 1) comes from (dim_state, dim_control)
 
-% States (X = [omega_m; omega_l; theta_m; theta_l])
 omega_m = X(1);
 omega_l = X(2);
-theta_m = X(3);
-theta_l = X(4);
 
 % Parameters (param = [N J_m J_l K_S D_S T_C b_fr])
 N = param(1);
