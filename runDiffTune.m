@@ -91,9 +91,9 @@ param.inv_J_l = param.J_l;
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
-k1 = 5;
-k2 = 5;
-k_pos = 5;      % ignored when hand-tuning STSMC
+k1 = 1;
+k2 = 1;
+k_pos = 1;      % ignored when hand-tuning STSMC
 k_vec = [k1; k2; k_pos];
 
 %% Define desired trajectory if necessary
@@ -103,7 +103,7 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = -freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 1;  % Calculate  
+learningRate = 2;  % Calculate  
 maxIterations = 100;
 itr = 0;
 
@@ -157,13 +157,22 @@ while (1)
         % We then have:
         % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
         % Which can be written as (since we are only concerned with the position of load):
-        theta_gradient = theta_gradient + 2 * [0 0 0 X(4) - Xref] * dx_dtheta;
+        theta_gradient = theta_gradient + 2 * [0 0 0 X(4)-Xref] * dx_dtheta;
 
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param),[time(k) time(k+1)], X);
         X_storage = [X_storage sold(end,:)'];   % store the new state
         
     end
+
+    fprintf('dx_dtheta = \n');
+    disp(dx_dtheta);
+
+    fprintf('loss = \n');
+    disp(loss);
+
+    fprintf('theta_gradient = \n');
+    disp(theta_gradient);
 
     % Clear global variable
     clear v;
@@ -212,7 +221,7 @@ while (1)
     param_hist = [param_hist k_vec];
 
     % Plotting
-    set(gcf,'Position',[172 120 950 455]);
+    % set(gcf,'Position',[172 120 950 455]);
     set(gcf,'color','w');
 
     % Position (theta_l) tracking
