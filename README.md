@@ -1,6 +1,7 @@
 # Auto-tuning of a P-STSMC controller applied to a machine tool drive train (via DiffTune)
 
-To read more on the DiffTune+ tool set visit the following repository:
+To read more on the DiffTune tool set visit the following repository:
+
 [DiffTune: Auto-Tuning through Auto-Differentiation](https://github.com/Sheng-Cheng/DiffTuneOpenSource/tree/main)
 
 ## Pre-requisites
