@@ -22,13 +22,7 @@ J_l = MX.sym('J_l', 1);         % J_l: Load inertia
 K_S = MX.sym('K_S', 1);         % K_s: Shaft stifness
 D_S = MX.sym('D_S', 1);         % D_s: Shaft damping coefficinet
 T_C = MX.sym('T_C', 1);       % T_Cm: Motor Coulomb friction
-% T_S = MX.sym('T_S', 1);       % T_Sm: Motor static friction coefficient
 b_fr = MX.sym('b_fr', 1);   % beta_m: Motor viscous friction coefficient
-
-% Disturbances
-% T_Fm = MX.sym('T_Fm', 1);       % T_Fm: Motor friction
-% T_Fl = MX.sym('T_Fl', 1);       % T_Fl: Load friction
-% T_l = MX.sym('T_l', 1);         % T_l: Load torque
 
 param = [N J_m J_l K_S D_S T_C b_fr];
 
@@ -52,10 +46,8 @@ k1 = k_vec(1);
 k2 = k_vec(2);
 k_pos = k_vec(3);
 
-
 %% Define the control input
-% u = MX.sym('u',dim_control);
-u = MX.sym('u', 1);    % ændret fordi det u vi bruger her er inputtet til systemet u og er 1 dimensionelt.
+u = MX.sym('u', dim_control);
 
 %% Define the dynamics (discretized via Forward Euler)
 dynamics = X + dt * dynamics(t, X, u, param);

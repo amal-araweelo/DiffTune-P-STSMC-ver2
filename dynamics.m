@@ -3,7 +3,6 @@
 % X = [omega_m; omega_l; theta_m; theta_l]
 
 function dXdt = dynamics(t, X, u, param)
-% dXdt = zeros(4, 1); % where (4, 1) comes from (dim_state, dim_control)
 
 % States
 omega_m = X(1);

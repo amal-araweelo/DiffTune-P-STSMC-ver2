@@ -61,18 +61,17 @@ time = 0:dt:10; % 10 s
 % Motor mechanical parameters
 J_m = 2.81e-4 + 5.5e-4; % kgm^2 -- Moment of inertia
 N = 1;                  % -- Gear ratio
+
 % Values of friction and shaft parameters
 % Taken from Table 4.3: Summary of calculated friction and shaft parameters
 % (page 40, Dimitrios Papageorgiou phd thesis)
 % Shaft constants
 K_S = 32.94;    % N m rad^(-1)
 D_S = 0.0548;   % N m s rad^(-1)
-% Coulomb friction
-% (assuming T_C is the average of T_C_m and T_C_l)
+
+% Coulomb friction (assuming T_C is the average of T_C_m and T_C_l)
 T_C = (0.0223 + 0.0232) / 2;    % N m
-% Static friction
-% (assuming T_S is the average of T_S_m and T_S_l)
-% T_S = (0.0441 + 0.0453) / 2;    % N m
+
 % Friction constants
 b_fr = 0.0016;  % N m s rad^(-1)
 J_l = 1; % kgm^2 -- Moment of inertia
@@ -108,9 +107,6 @@ while (1)
     fprintf('------------------------\n');
     fprintf('itr = %d \n', itr);
 
-    % fprintf('k_vec = \n');
-    % disp(k_vec);
-
     % Initialize state
     X_storage = zeros(dim_state,1);
     
@@ -139,15 +135,7 @@ while (1)
         loss = loss + (Xref - X(4))^2;
 
         % Accumulating the gradient of loss w/ respect to controller parameters
-        % You need to provide dloss_dx and dloss_du here
-        % dloss_dx = 2 * (X - Xref);  % gradient of loss function w/ respect to state (see notes)
-        % dloss_du = 0;               % control input is not part of loss path (therefore loss does not depend directly on control input)
-        % We then have:
-        % theta_gradient = theta_gradient + dloss_dx * dx_dtheta;
-        % Which can be written as (since we are only concerned with the position of load):
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4)-Xref] * dx_dtheta;
-        % fprintf('X(4)-Xref = ');
-        % disp(X(4)-Xref);
 
         % Integrate the ode dynamics
         [~,sold] = ode45(@(t,X)dynamics(t, X, u, param'),[time(k) time(k+1)], X);
@@ -155,21 +143,8 @@ while (1)
         
     end
 
-    fprintf('dx_dtheta = \n');
-    disp(dx_dtheta);
-
-    % fprintf('loss = \n');
-    % disp(loss);
-
-    fprintf('theta_gradient = \n');
-    disp(theta_gradient);
-
     % Clear global variable
     clear global v;
-
-    % (loss is the squared norm of the position tracking error (error_theta = theta_r - theta_l))
-    % loss = loss + (norm(theta_r(k) - X(4)))^2;  % X(4) corresponds to current theta_l
-    % loss = trace([X_storage(:,1:end)-Xref_storage(:,1:end)]'*diag([1 0 0 0]) * [X_storage(:,1:end)-Xref_storage(:,1:end)]);
 
     % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / length(time) * loss);
@@ -180,9 +155,6 @@ while (1)
 
     % Update the gradient
     gradientUpdate = - learningRate * theta_gradient;
-    
-    fprintf('gradientUpdate = \n');
-    disp(gradientUpdate);
 
     % Sanity check
     if isnan(gradientUpdate)
@@ -192,20 +164,6 @@ while (1)
 
     % Gradient descent
     k_vec = k_vec + gradientUpdate';    % ' used for transposing matrix or vector
-
-    % Projection of all parameters to the feasible set
-    % the feasible set of parameters in this case is greater than 0.1
-    % (taken from template)
-    % (NEED TO FIND OUR VALUE!)
-    if any(k_vec < 0.01)
-       neg_indicator = (k_vec < 0.01);
-       pos_indicator = ~neg_indicator;
-       k_vec_default = 0.01 * ones(dim_controllerParameters,1);
-       k_vec = neg_indicator.*k_vec_default + pos_indicator.*k_vec_default;
-    end
-
-    fprintf('k_vec_updated = \n');
-    disp(k_vec);
 
     % store the parameters
     param_hist = [param_hist k_vec];
@@ -263,13 +221,9 @@ end
 
 %% Plot trajectory
 h = figure(2);
-plot(time, theta_r,'DisplayName','theta_r');
+plot(time, theta_r,'DisplayName','theta_r','LineWidth',1.5);
 hold on;
-plot(time, X_storage(4,:),'DisplayName','theta_l');
-legend;
+plot(time, X_storage(4,:),'DisplayName','theta_l','LineWidth',1.5);
+legend();
 ylabel('\theta [rad]');
 saveas(h, 'MP4\sine resp.png');
-
-%% Debug session
-% check_dx_dtheta = sum(isnan(dx_dtheta),'all');
-% check_du_dtheta = sum(isnan(du_dtheta),'all');

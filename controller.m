@@ -50,8 +50,7 @@ v = v + v_dot * dt;
 u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + v;
 u = u_smc + J_m * omega_r_dot;
 
-
 % Output
 ud = u;
-% fprintf('ud = %d \n', ud);
+
 end 
