@@ -24,11 +24,11 @@
 % theta_m: motor angular position
 % theta_l: load angular position
 % X = [omega_m; omega_l; theta_m; theta_l]
-% Xref (ini) = [omega_m; omega_l; theta_m; theta_r]
+% Xref = theta_r(k)
 
 % Control includes
-% Theta_r: Load postition reference
-% Omega_r: Motor velocity reference
+% theta_r: Load postition reference
+% omega_r: Motor velocity reference
 % u: Torque command
 
 close all;
@@ -164,28 +164,37 @@ while (1)
 
     % Gradient descent
     k_vec = k_vec + gradientUpdate';    % ' used for transposing matrix or vector
+    fprintf('k_vec = \n');
+    disp(k_vec);
 
     % store the parameters
     param_hist = [param_hist k_vec];
 
     % Plotting
-    % set(gcf,'Position',[172 120 950 455]);
+    set(gcf, 'Position', [100, 100, 1000, 600]);
     set(gcf,'color','w');
 
     % Position (theta_l) tracking
-    subplot(3,3,[1,2;4,5]);
+    subplot(1,3,[1 2]);
     plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
     hold on;
     plot(time,theta_r,'DisplayName','desired','LineWidth',1.5);
     xlabel('time [s]');
     ylabel('\theta_l [rad]');
     grid on;
-    h_lgd = legend;
-    set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
+    legend;
+    % h_lgd = legend;
+    % set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
     set(gca,'FontSize',10);
 
+    text(0.25,-0.95,['itr = ' num2str(itr)]);
+    text(0.25,-1.05,['k1 = ' num2str(k_vec(1)) ', grad = ' num2str(theta_gradient(1))]);
+    text(0.25,-1.15,['k2 = ' num2str(k_vec(2)) ', grad = ' num2str(theta_gradient(2))]);
+    text(0.25,-1.25,['k\_pos = ' num2str(k_vec(3)) ', grad = ' num2str(theta_gradient(3))]);
+    text(0.25,-1.35,['loss = ' num2str(loss)]);
+
     % RMSE
-    subplot(3,3,[3;6;9]);
+    subplot(1,3,3);
     plot(rmse_hist,'LineWidth',1.5);
     hold on;
     grid on;

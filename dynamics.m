@@ -21,8 +21,8 @@ b_fr = param(7);
 
 % Disturbances computations
 T_l = K_S * (theta_m / N - theta_l) + D_S * (omega_m / N - omega_l);
-T_Fm = omega_m * b_fr + sgn_approx(omega_m * 10) * T_C;
-T_Fl = omega_l * b_fr + sgn_approx(omega_l * 10) * T_C + 0;
+T_Fm = omega_m * b_fr + sgn_approx(omega_m * 100) * T_C;
+T_Fl = omega_l * b_fr + sgn_approx(omega_l * 100) * T_C + 0;
 
 % Derivative computations
 dXdt1 = 1/J_m*u - 1/J_m*T_Fm - 1/(N*J_m)*T_l; % omega_m_dot
