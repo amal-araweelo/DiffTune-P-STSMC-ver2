@@ -16,15 +16,17 @@ dt = MX.sym('dt', 1); % (should be set to 1-8 kHz in runDiffTune.m)
 t = MX.sym('t', 1);
 
 % Constant drive train parameters
-N = MX.sym('N',1);              % N: Gearing ratio
+N = MX.sym('N', 1);             % N: Gearing ratio
 J_m = MX.sym('J_m', 1);         % J_m: Motor inertia
 J_l = MX.sym('J_l', 1);         % J_l: Load inertia
 K_S = MX.sym('K_S', 1);         % K_s: Shaft stifness
 D_S = MX.sym('D_S', 1);         % D_s: Shaft damping coefficinet
-T_C = MX.sym('T_C', 1);       % T_Cm: Motor Coulomb friction
-b_fr = MX.sym('b_fr', 1);   % beta_m: Motor viscous friction coefficient
+T_Cm = MX.sym('T_Cm', 1);       % T_Cm: Motor Coulomb friction
+T_Cl = MX.sym('T_Cl', 1);
+beta_m = MX.sym('beta_m', 1);   % beta_m: Motor viscous friction coefficient
+beta_l = MX.sym('beta_l', 1);
 
-param = [N J_m J_l K_S D_S T_C b_fr];
+param = [N J_m J_l K_S D_S T_Cm T_Cl beta_m beta_l];
 
 %% casADI-lize all the variables in the computation
 X = MX.sym('X', dim_state);        % system state
@@ -64,12 +66,12 @@ grad_h_theta = jacobian(h,k_vec);
 %% Function-lize the generated jacobians
 
 % inputs_f denotes the input arguments to the dynamics
-grad_f_X_fcn = Function('grad_f_X_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_C, b_fr},{grad_f_X});
-grad_f_u_fcn = Function('grad_f_u_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_C, b_fr},{grad_f_u});
+grad_f_X_fcn = Function('grad_f_X_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_Cm, T_Cl, beta_m, beta_l},{grad_f_X});
+grad_f_u_fcn = Function('grad_f_u_fcn',{X, dt, u, N, J_m, J_l, K_S, D_S, T_Cm, T_Cl, beta_m, beta_l},{grad_f_u});
 
 % inputs_h denote the input arguments to the controller
-grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_X});
-grad_h_theta_fcn = Function('grad_h_theta_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, J_m, N, dt},{grad_h_theta});
+grad_h_X_fcn = Function('grad_h_X_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, N, J_m, dt},{grad_h_X});
+grad_h_theta_fcn = Function('grad_h_theta_fcn',{X, Xref, k_vec, theta_r_dot, theta_r_2dot, N, J_m, dt},{grad_h_theta});
 
 %% Generate mex functions
 opts = struct('main', true,...

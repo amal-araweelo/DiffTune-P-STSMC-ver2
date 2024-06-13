@@ -30,13 +30,15 @@ omega_l = X(2);
 theta_l = X(4);
 theta_r = Xref;
 
-% Parameters (param = [N J_m J_l K_S D_S T_C b_fr])
+% Parameters (param = [N J_m J_l K_S D_S T_Cm T_Cl beta_m beta_l])
 N = param(1);
 J_m = param(2);
 
 % P-controller
 omega_r = k_pos * (theta_r - theta_l) + N * theta_r_dot;
 omega_r_dot = k_pos * (theta_r_dot - omega_l) + N * theta_r_2dot;
+% omega_r = k_pos * (theta_l - theta_r) + theta_r_dot;            % (Table 5.2)
+% omega_r_dot = k_pos * (omega_l - theta_r_dot) + theta_r_2dot;   % (5.9)
 
 % STSMC controller
 s = omega_m - omega_r; % Error
@@ -47,7 +49,7 @@ if (isempty(v)) % initialise v to zero in first iteration
 end
 v = v + v_dot * dt;
 
-u_smc = -k1 * sqrt(abs(s)) * sgn_approx(s) + v;
+u_smc = -k1 * sqrt(abs(s)) * sgn_approx(100*s) + v;
 u = u_smc + J_m * omega_r_dot;
 
 % Output

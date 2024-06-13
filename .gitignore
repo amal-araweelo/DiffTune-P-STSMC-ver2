@@ -3,4 +3,6 @@ mex/
 *.mp4
 *.mexw64
 MP4/
+Results/
+*.png
 
