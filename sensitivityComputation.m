@@ -14,7 +14,7 @@
 % dXdphi: calculated sensitivity
 % dudphi: calculated sensitivity
 
-function [dXdphi,dudphi] = sensitivityComputation(dxdtheta_current, X, Xref, theta_r_dot, theta_r_2dot, u, param, k_vec, dt)
+function [dXdphi,dudphi] = sensitivityComputation(dxdtheta_current, X, Xref, theta_r_dot, theta_r_2dot, u, param, k_vec, dt, v)
 
 % Evaluate the Jacobians
 dfdX = grad_f_X_fcn(X, dt, u, param(1), param(2), param(3), param(4), param(5), param(6), param(7), param(8), param(9));
@@ -29,13 +29,13 @@ dfdu = full(dfdu);
 % fprintf('dfdu = \n');
 % disp(dfdu);
 
-dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param(1), param(2), dt);
+dhdX = grad_h_X_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param(1), param(2), dt, v);
 dhdX = full(dhdX);
 
 % fprintf('dhdX = \n');
 % disp(dhdX);
 
-dhdtheta = grad_h_theta_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param(1), param(2), dt);
+dhdtheta = grad_h_theta_fcn(X, Xref, k_vec, theta_r_dot, theta_r_2dot, param(1), param(2), dt, v);
 dhdtheta = full(dhdtheta);
 
 % fprintf('dhdtheta = \n');
