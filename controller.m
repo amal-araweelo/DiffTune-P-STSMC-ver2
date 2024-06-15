@@ -47,9 +47,10 @@ v_dot = - k2 * sgn_approx(100*s);
 if (isempty(v)) % initialise v to zero in first iteration
     v = 0;
 end
+% global v;
 v = v + v_dot * dt;
 
-u_smc = -k1 * sqrt(abs(s)) * sgn_approx(100*s) + v;
+u_smc = - k1 * sqrt(abs(s)) * sgn_approx(100*s) + v;
 u = u_smc + J_m * omega_r_dot;
 
 % Output

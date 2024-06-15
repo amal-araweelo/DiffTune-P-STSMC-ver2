@@ -60,8 +60,9 @@ time = 0:dt:10; % 10 s
 %% constant parameters
 % Motor mechanical parameters
 N = 1;                  % -- Gear ratio
-J_m = 2.81e-4 + 5.5e-4; % kgm^2 -- Moment of inertia
-J_l = 1;                % kgm^2 -- Moment of inertia
+J_m = 2.81e-4 + 5.5e-4; % kgm^2 -- Moment of inertia     (8.31e-4 kg m^2)
+% J_l = 1;                % kgm^2 -- Moment of inertia
+J_l = 0.000831;
 
 % Taken from Table 4.3: Summary of calculated friction and shaft parameters
 % (page 40, Dimitrios Papageorgiou phd thesis)
@@ -88,7 +89,7 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = - freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 0.5;  % Calculate       0.5 kunne ikke finde bedre løsning, 0.05 så rammer den k_vec = 0.1 for alle
+learningRate = 2;  % Calculate       0.5 kunne ikke finde bedre løsning, 0.05 så rammer den k_vec = 0.1 for alle
 maxIterations = 100;
 itr = 0;
 
@@ -124,6 +125,9 @@ while (1)
     loss = 0;
     theta_gradient = zeros(1, dim_controllerParameters);
 
+    % global v;
+    % v = 0;
+
     for k = 1 : length(time) - 1
        
         % Load current state and current reference
@@ -137,8 +141,7 @@ while (1)
         [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
 
         % Accumulate the loss (mean-squared-error (MSE))
-        loss = loss + norm(Xref - X(4))^2;
-        % fprintf('loss = %.3f \n', loss);
+        loss = loss + norm(Xref-X(4))^2;      % (Xref-X(4))^2 = (X(4)-Xref)^2
 
         % Accumulating the gradient of loss w/ respect to controller parameters
         theta_gradient = theta_gradient + 2 * [0 0 0 X(4)-Xref] * dx_dtheta;
@@ -149,8 +152,10 @@ while (1)
         
     end
 
-    % Clear global variable
-    clear global v;
+    % Reset global variable
+    % clear global v;
+    global v;
+    v = [];
 
     % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / (length(time)-1) * loss);
@@ -257,3 +262,12 @@ plot(time, X_storage(4,:),'DisplayName','\theta_l','LineWidth',1.5);
 legend();
 ylabel('\theta [rad]');
 saveas(h, 'Results\sine resp.png');
+
+h = figure(3);
+plot(time, X_storage(1,:),'DisplayName','\omega_m','LineWidth',1.5);
+hold on;
+plot(time, X_storage(2,:),'DisplayName','\omega_l','LineWidth',1.5);
+legend();
+ylabel('\omega [rad/s]');
+saveas(h, 'Results\omega_m og omega_l.png');
+
