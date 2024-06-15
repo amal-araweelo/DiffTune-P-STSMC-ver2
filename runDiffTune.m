@@ -77,9 +77,9 @@ param = [N J_m J_l K_S D_S T_Cm T_Cl beta_m beta_l];
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
 % STSMC (in nonlinear controller for omega_m)
-k1 = 10;
-k2 = 10;
-k_pos = 10;      % ignored when hand-tuning STSMC
+k1 = 1;
+k2 = 1;
+k_pos = 1;      % ignored when hand-tuning STSMC
 k_vec = [k1; k2; k_pos];
 
 %% Define desired trajectory if necessary
@@ -126,7 +126,7 @@ while (1)
     theta_gradient = zeros(1, dim_controllerParameters);
 
     % global v;
-    % v = 0;
+    v = 0;
 
     for k = 1 : length(time) - 1
        
@@ -135,10 +135,10 @@ while (1)
         Xref = theta_r(k);
  
         % Compute the control action
-        u = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param, dt); 
+        [u, v] = controller(X, Xref, k_vec, theta_r_dot(k), theta_r_2dot(k), param, dt, v); 
 
         % Compute the sensitivity 
-        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt);
+        [dx_dtheta, du_dtheta] = sensitivityComputation(dx_dtheta, X, Xref, theta_r_dot(k), theta_r_2dot(k), u, param, k_vec, dt, v);
 
         % Accumulate the loss (mean-squared-error (MSE))
         loss = loss + norm(Xref-X(4))^2;      % (Xref-X(4))^2 = (X(4)-Xref)^2
@@ -151,11 +151,6 @@ while (1)
         X_storage = [X_storage sold(end,:)'];   % store the new state
         
     end
-
-    % Reset global variable
-    % clear global v;
-    global v;
-    v = [];
 
     % Compute the RMSE (root-mean-square error)
     RMSE = sqrt(1 / (length(time)-1) * loss);
