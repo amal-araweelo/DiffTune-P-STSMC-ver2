@@ -76,10 +76,9 @@ beta_l = 0.0016;    % N m s rad^(-1)
 param = [N J_m J_l K_S D_S T_Cm T_Cl beta_m beta_l];
 
 %% Initialize controller gains (must be a vector of size dim_controllerParameters x 1)
-% STSMC (in nonlinear controller for omega_m)
 k1 = 1;
 k2 = 1;
-k_pos = 1;      % ignored when hand-tuning STSMC
+k_pos = 1;
 k_vec = [k1; k2; k_pos];
 
 %% Define desired trajectory if necessary
@@ -89,8 +88,8 @@ theta_r_dot = freq * cos(freq * time);
 theta_r_2dot = - freq^2 * sin(freq * time);
 
 %% Initialize variables for DiffTune iterations
-learningRate = 2;  % Calculate       0.5 kunne ikke finde bedre løsning, 0.05 så rammer den k_vec = 0.1 for alle
-maxIterations = 100;
+learningRate = 0.05;
+maxIterations = 50;
 itr = 0;
 
 loss_hist = [];  % storage of the loss value in each iteration
@@ -171,21 +170,11 @@ while (1)
     % Gradient descent
     k_vec = k_vec + gradientUpdate';    % ' used for transposing matrix or vector
 
-    fprintf('after: \n');
+    % fprintf('after: \n');
     fprintf('k1 = %.4f, grad = %.4f \n', k_vec(1), theta_gradient(1));  % OBS gradienten der printes er gradienten udregnet for den tidligere k_vec værdi
     fprintf('k2 = %.4f, grad = %.4f \n', k_vec(2), theta_gradient(2));
     fprintf('k_pos = %.4f, grad = %.4f \n', k_vec(3), theta_gradient(3));
-    fprintf('loss = %.4f \n', loss);
-
-    % projection of all parameters to be > 0.5
-    % if k_vec(1) < 0.5
-
-    if any(k_vec < 0.5)
-        neg_indicator = (k_vec < 0.5);  % produces 3x1 array with 1 if smaller and 0 if not
-        pos_indicator = ~neg_indicator;
-        k_default = 0.5*ones(dim_controllerParameters,1);
-        k_vec = neg_indicator.*k_default + pos_indicator.*k_vec;
-    end
+    % fprintf('loss = %.4f \n', loss);
 
     % store the parameters
     param_hist = [param_hist k_vec];
@@ -196,23 +185,22 @@ while (1)
 
     % Position (theta_l) tracking
     subplot(1,3,[1 2]);
-    plot(time,X_storage(4,:),'DisplayName','actual','LineWidth',1.5);
+    plot(time,X_storage(4,:),'LineWidth',1.5);
     hold on;
-    plot(time,theta_r,'DisplayName','desired','LineWidth',1.5);
-    xlabel('time [s]');
-    ylabel('\theta_l [rad]');
+    plot(time,theta_r,'--','LineWidth',1.5);
+    lgd = legend('\theta_l', '\theta_r','Location','southeast');
+    set(lgd, 'FontSize', 10)
+    xlabel('time (s)');
+    ylabel('position (rad)');
     grid on;
     legend;
-    % h_lgd = legend;
-    % set(h_lgd,'Position',[0.3811 0.8099 0.1097 0.0846],'FontSize',10);
     set(gca,'FontSize',10);
 
-    text(0.25,-0.85,['itr = ' num2str(itr)]);
-    text(0.25,-0.95,['learningRate = ' num2str(learningRate)]);
-    text(0.25,-1.05,['k1 = ' num2str(k_vec(1)) ', grad = ' num2str(theta_gradient(1))]);
-    text(0.25,-1.15,['k2 = ' num2str(k_vec(2)) ', grad = ' num2str(theta_gradient(2))]);
-    text(0.25,-1.25,['k\_pos = ' num2str(k_vec(3)) ', grad = ' num2str(theta_gradient(3))]);
-    text(0.25,-1.35,['loss = ' num2str(loss)]);
+    text(0.15,-0.67,['learningRate = ' num2str(learningRate)]);
+    text(0.15,-0.74,['k1 = ' sprintf('%.4f', k_vec(1)) ', grad = ' sprintf('%.4f', theta_gradient(1))]);
+    text(0.15,-0.81,['k2 = ' sprintf('%.4f', k_vec(2)) ', grad = ' sprintf('%.4f', theta_gradient(2))]);
+    text(0.15,-0.88,['k\_pos = ' sprintf('%.4f', k_vec(3)) ', grad = ' sprintf('%.4f', theta_gradient(3))]);
+    text(0.15,-0.95,['loss = ' sprintf('%.4f', loss)]);
 
     % RMSE
     subplot(1,3,3);
@@ -223,9 +211,9 @@ while (1)
 
     xlim([0 maxIterations]);
     ylim([0 rmse_hist(1)*1.1]);
-    text(25,0.025,['iteration = ' num2str(length(rmse_hist))],'FontSize',12);
+    text(20,0.025,['iteration = ' num2str(length(rmse_hist))],'FontSize',10);
     xlabel('iterations');
-    ylabel('RMSE [rad]');
+    ylabel('RMSE (rad)');
     set(gca,'FontSize',10);
     plotedit(gca,'on');
     plotedit(gca,'off');
@@ -251,18 +239,31 @@ end
 
 %% Plot trajectory
 h = figure(2);
-plot(time, theta_r,'DisplayName','\theta_r','LineWidth',1.5);
+
+plot(time, X_storage(4,:), 'LineWidth', 1.5);
 hold on;
-plot(time, X_storage(4,:),'DisplayName','\theta_l','LineWidth',1.5);
-legend();
-ylabel('\theta [rad]');
+plot(time, theta_r, '--', 'LineWidth', 1.5);
+hold off;
+
+grid on;
+lgd = legend('\theta_l', '\theta_r', 'Location', 'southeast');
+set(lgd, 'FontSize', 10);
+xlabel('time (s)', 'FontSize', 10);
+ylabel('position (rad)', 'FontSize', 10);
+set(gca, 'FontSize', 10);
+
+text(0.5,-0.55,['k1 = ' sprintf('%.4f', k_vec(1))],'FontSize',10);
+text(0.5,-0.65,['k2 = ' sprintf('%.4f', k_vec(2))],'FontSize',10);
+text(0.5,-0.75,['k\_pos = ' sprintf('%.4f', k_vec(3))],'FontSize',10);
+text(0.5,-0.85,['rmse = ' sprintf('%.4f', rmse_hist(end))],'FontSize',10);
+
 saveas(h, 'Results\sine resp.png');
 
-h = figure(3);
-plot(time, X_storage(1,:),'DisplayName','\omega_m','LineWidth',1.5);
-hold on;
-plot(time, X_storage(2,:),'DisplayName','\omega_l','LineWidth',1.5);
-legend();
-ylabel('\omega [rad/s]');
-saveas(h, 'Results\omega_m og omega_l.png');
+% h = figure(3);
+% plot(time, X_storage(1,:),'DisplayName','\omega_m','LineWidth',1.5);
+% hold on;
+% plot(time, X_storage(2,:),'DisplayName','\omega_l','LineWidth',1.5);
+% legend();
+% ylabel('\omega [rad/s]');
+% saveas(h, 'Results\omega_m og omega_l.png');
 
